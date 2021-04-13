@@ -4,21 +4,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 	"testing"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
+	"github.com/hashicorp/packer-plugin-sdk/acctest"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
-	builderT "github.com/hashicorp/packer/acctest"
 )
 
 const defaultTestRegion = "cn-beijing"
 
+type TestCheckFunc func(*exec.Cmd, string) error
+
 func TestBuilderAcc_validateRegion(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv(builderT.TestEnvVar) == "" {
-		t.Skip(fmt.Sprintf("Acceptance tests skipped unless env '%s' set", builderT.TestEnvVar))
+	if os.Getenv(acctest.TestEnvVar) == "" {
+		t.Skip(fmt.Sprintf("Acceptance tests skipped unless env '%s' set", acctest.TestEnvVar))
 		return
 	}
 
@@ -43,7 +46,9 @@ func TestBuilderAcc_validateRegion(t *testing.T) {
 
 func TestBuilderAcc_basic(t *testing.T) {
 	t.Parallel()
-	builderT.Test(t, builderT.TestCase{
+	acctest.TestPlugin(t, &acctest.PluginTestCase{
+		Name: "test-alicloud-builder-basic",
+		Type: "alicloud-ecs",
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
@@ -54,7 +59,7 @@ func TestBuilderAcc_basic(t *testing.T) {
 
 const testBuilderAccBasic = `
 {	"builders": [{
-		"type": "test",
+		"type": "alicloud-ecs",
 		"region": "cn-beijing",
 		"instance_type": "ecs.n1.tiny",
 		"source_image":"ubuntu_18_04_64_20G_alibase_20190509.vhd",
@@ -66,7 +71,9 @@ const testBuilderAccBasic = `
 
 func TestBuilderAcc_withDiskSettings(t *testing.T) {
 	t.Parallel()
-	builderT.Test(t, builderT.TestCase{
+	acctest.TestPlugin(t, &acctest.PluginTestCase{
+		Name: "test-alicloud-builder-with-disk-settings",
+		Type: "alicloud-ecs",
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
@@ -78,7 +85,7 @@ func TestBuilderAcc_withDiskSettings(t *testing.T) {
 
 const testBuilderAccWithDiskSettings = `
 {	"builders": [{
-		"type": "test",
+		"type": "alicloud-ecs",
 		"region": "cn-beijing",
 		"instance_type": "ecs.n1.tiny",
 		"source_image":"ubuntu_18_04_64_20G_alibase_20190509.vhd",
@@ -103,8 +110,10 @@ const testBuilderAccWithDiskSettings = `
 	}]
 }`
 
-func checkImageDisksSettings() builderT.TestCheckFunc {
-	return func(artifacts []packersdk.Artifact) error {
+func checkImageDisksSettings() TestCheckFunc {
+	return func(buildCommand *exec.Cmd, logfile string) error {
+		// load manifest, read artifact names, and check them
+
 		if len(artifacts) > 1 {
 			return fmt.Errorf("more than 1 artifact")
 		}
@@ -191,7 +200,9 @@ func checkImageDisksSettings() builderT.TestCheckFunc {
 
 func TestBuilderAcc_withIgnoreDataDisks(t *testing.T) {
 	t.Parallel()
-	builderT.Test(t, builderT.TestCase{
+	acctest.TestPlugin(t, &acctest.PluginTestCase{
+		Name: "test-alicloud-builder-with-ignore-data-disks",
+		Type: "alicloud-ecs",
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
@@ -203,7 +214,7 @@ func TestBuilderAcc_withIgnoreDataDisks(t *testing.T) {
 
 const testBuilderAccIgnoreDataDisks = `
 {	"builders": [{
-		"type": "test",
+		"type": "alicloud-ecs",
 		"region": "cn-beijing",
 		"instance_type": "ecs.gn5-c8g1.2xlarge",
 		"source_image":"ubuntu_18_04_64_20G_alibase_20190509.vhd",
@@ -214,7 +225,7 @@ const testBuilderAccIgnoreDataDisks = `
 	}]
 }`
 
-func checkIgnoreDataDisks() builderT.TestCheckFunc {
+func checkIgnoreDataDisks() TestCheckFunc {
 	return func(artifacts []packersdk.Artifact) error {
 		if len(artifacts) > 1 {
 			return fmt.Errorf("more than 1 artifact")
@@ -254,7 +265,9 @@ func checkIgnoreDataDisks() builderT.TestCheckFunc {
 
 func TestBuilderAcc_windows(t *testing.T) {
 	t.Parallel()
-	builderT.Test(t, builderT.TestCase{
+	acctest.TestPlugin(t, &acctest.PluginTestCase{
+		Name: "test-alicloud-builder-windows",
+		Type: "alicloud-ecs",
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
@@ -265,7 +278,7 @@ func TestBuilderAcc_windows(t *testing.T) {
 
 const testBuilderAccWindows = `
 {	"builders": [{
-		"type": "test",
+		"type": "alicloud-ecs",
 		"region": "cn-beijing",
 		"instance_type": "ecs.n1.tiny",
 		"source_image":"winsvr_64_dtcC_1809_en-us_40G_alibase_20190318.vhd",
@@ -281,7 +294,9 @@ const testBuilderAccWindows = `
 
 func TestBuilderAcc_regionCopy(t *testing.T) {
 	t.Parallel()
-	builderT.Test(t, builderT.TestCase{
+	acctest.TestPlugin(t, &acctest.PluginTestCase{
+		Name: "test-alicloud-builder-region-copy",
+		Type: "alicloud",
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
@@ -294,7 +309,7 @@ func TestBuilderAcc_regionCopy(t *testing.T) {
 const testBuilderAccRegionCopy = `
 {
 	"builders": [{
-		"type": "test",
+		"type": "alicloud-ecs",
 		"region": "cn-beijing",
 		"instance_type": "ecs.n1.tiny",
 		"source_image":"ubuntu_18_04_64_20G_alibase_20190509.vhd",
@@ -307,7 +322,7 @@ const testBuilderAccRegionCopy = `
 }
 `
 
-func checkRegionCopy(regions []string) builderT.TestCheckFunc {
+func checkRegionCopy(regions []string) TestCheckFunc {
 	return func(artifacts []packersdk.Artifact) error {
 		if len(artifacts) > 1 {
 			return fmt.Errorf("more than 1 artifact")
@@ -373,7 +388,9 @@ func checkRegionCopy(regions []string) builderT.TestCheckFunc {
 func TestBuilderAcc_forceDelete(t *testing.T) {
 	t.Parallel()
 	// Build the same alicloud image twice, with ecs_image_force_delete on the second run
-	builderT.Test(t, builderT.TestCase{
+	acctest.TestPlugin(t, &acctest.PluginTestCase{
+		Name: "test-alicloud-builder-force-delete",
+		Type: "alicloud-ecs",
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
@@ -382,7 +399,9 @@ func TestBuilderAcc_forceDelete(t *testing.T) {
 		SkipArtifactTeardown: true,
 	})
 
-	builderT.Test(t, builderT.TestCase{
+	acctest.TestPlugin(t, &acctest.PluginTestCase{
+		Name: "test-alicloud-builder-force-delete-2",
+		Type: "alicloud-ecs",
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
@@ -398,7 +417,7 @@ func buildForceDeregisterConfig(val, name string) string {
 const testBuilderAccForceDelete = `
 {
 	"builders": [{
-		"type": "test",
+		"type": "alicloud-ecs",
 		"region": "cn-beijing",
 		"instance_type": "ecs.n1.tiny",
 		"source_image":"ubuntu_18_04_64_20G_alibase_20190509.vhd",
@@ -412,7 +431,9 @@ const testBuilderAccForceDelete = `
 
 func TestBuilderAcc_ECSImageSharing(t *testing.T) {
 	t.Parallel()
-	builderT.Test(t, builderT.TestCase{
+	acctest.TestPlugin(t, &acctest.PluginTestCase{
+		Name: "test-alicloud-builder-image-sharing",
+		Type: "alicloud-ecs",
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
@@ -425,7 +446,7 @@ func TestBuilderAcc_ECSImageSharing(t *testing.T) {
 const testBuilderAccSharing = `
 {
 	"builders": [{
-		"type": "test",
+		"type": "alicloud-ecs",
 		"region": "cn-beijing",
 		"instance_type": "ecs.n1.tiny",
 		"source_image":"ubuntu_18_04_64_20G_alibase_20190509.vhd",
@@ -437,7 +458,7 @@ const testBuilderAccSharing = `
 }
 `
 
-func checkECSImageSharing(uid string) builderT.TestCheckFunc {
+func checkECSImageSharing(uid string) TestCheckFunc {
 	return func(artifacts []packersdk.Artifact) error {
 		if len(artifacts) > 1 {
 			return fmt.Errorf("more than 1 artifact")
@@ -476,7 +497,9 @@ func TestBuilderAcc_forceDeleteSnapshot(t *testing.T) {
 	destImageName := "delete"
 
 	// Build the same alicloud image name twice, with force_delete_snapshot on the second run
-	builderT.Test(t, builderT.TestCase{
+	acctest.TestPlugin(t, &acctest.PluginTestCase{
+		Name: "test-alicloud-builder-force-delete-snapshot",
+		Type: "alicloud-ecs",
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
@@ -520,7 +543,7 @@ func buildForceDeleteSnapshotConfig(val, name string) string {
 const testBuilderAccForceDeleteSnapshot = `
 {
 	"builders": [{
-		"type": "test",
+		"type": "alicloud-ecs",
 		"region": "cn-beijing",
 		"instance_type": "ecs.n1.tiny",
 		"source_image":"ubuntu_18_04_64_20G_alibase_20190509.vhd",
@@ -533,8 +556,8 @@ const testBuilderAccForceDeleteSnapshot = `
 }
 `
 
-func checkSnapshotsDeleted(snapshotIds []string) builderT.TestCheckFunc {
-	return func(artifacts []packersdk.Artifact) error {
+func checkSnapshotsDeleted(snapshotIds []string) TestCheckFunc {
+	return func(buildCommand *exec.Cmd, logfile string) error {
 		// Verify the snapshots are gone
 		client, _ := testAliyunClient()
 		data, err := json.Marshal(snapshotIds)
@@ -560,7 +583,9 @@ func checkSnapshotsDeleted(snapshotIds []string) builderT.TestCheckFunc {
 
 func TestBuilderAcc_imageTags(t *testing.T) {
 	t.Parallel()
-	builderT.Test(t, builderT.TestCase{
+	acctest.TestPlugin(t, &acctest.PluginTestCase{
+		Name: "test-alicloud-builder-image-tags",
+		Type: "alicloud-ecs",
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
@@ -572,7 +597,7 @@ func TestBuilderAcc_imageTags(t *testing.T) {
 
 const testBuilderAccImageTags = `
 {	"builders": [{
-		"type": "test",
+		"type": "alicloud-ecs",
 		"region": "cn-beijing",
 		"instance_type": "ecs.n1.tiny",
 		"source_image":"ubuntu_18_04_64_20G_alibase_20190509.vhd",
@@ -586,7 +611,7 @@ const testBuilderAccImageTags = `
 	}]
 }`
 
-func checkImageTags() builderT.TestCheckFunc {
+func checkImageTags() TestCheckFunc {
 	return func(artifacts []packersdk.Artifact) error {
 		if len(artifacts) > 1 {
 			return fmt.Errorf("more than 1 artifact")
@@ -674,7 +699,9 @@ func checkImageTags() builderT.TestCheckFunc {
 
 func TestBuilderAcc_dataDiskEncrypted(t *testing.T) {
 	t.Parallel()
-	builderT.Test(t, builderT.TestCase{
+	acctest.TestPlugin(t, &acctest.PluginTestCase{
+		Name: "test-alicloud-builder-data-disk-encrypted",
+		Type: "alicloud-ecs",
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
@@ -686,7 +713,7 @@ func TestBuilderAcc_dataDiskEncrypted(t *testing.T) {
 
 const testBuilderAccDataDiskEncrypted = `
 {	"builders": [{
-		"type": "test",
+		"type": "alicloud-ecs",
 		"region": "cn-beijing",
 		"instance_type": "ecs.n1.tiny",
 		"source_image":"ubuntu_18_04_64_20G_alibase_20190509.vhd",
@@ -715,7 +742,7 @@ const testBuilderAccDataDiskEncrypted = `
 	}]
 }`
 
-func checkDataDiskEncrypted() builderT.TestCheckFunc {
+func checkDataDiskEncrypted() TestCheckFunc {
 	return func(artifacts []packersdk.Artifact) error {
 		if len(artifacts) > 1 {
 			return fmt.Errorf("more than 1 artifact")
@@ -790,7 +817,9 @@ func checkDataDiskEncrypted() builderT.TestCheckFunc {
 
 func TestBuilderAcc_systemDiskEncrypted(t *testing.T) {
 	t.Parallel()
-	builderT.Test(t, builderT.TestCase{
+	acctest.TestPlugin(t, &acctest.PluginTestCase{
+		Name: "test-alicloud-builder-system-disk-encrypted",
+		Type: "alicloud-ecs",
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
@@ -803,7 +832,7 @@ func TestBuilderAcc_systemDiskEncrypted(t *testing.T) {
 const testBuilderAccSystemDiskEncrypted = `
 {
 	"builders": [{
-		"type": "test",
+		"type": "alicloud-ecs",
 		"region": "cn-beijing",
 		"instance_type": "ecs.n1.tiny",
 		"source_image":"ubuntu_18_04_64_20G_alibase_20190509.vhd",
@@ -814,7 +843,7 @@ const testBuilderAccSystemDiskEncrypted = `
 	}]
 }`
 
-func checkSystemDiskEncrypted() builderT.TestCheckFunc {
+func checkSystemDiskEncrypted() TestCheckFunc {
 	return func(artifacts []packersdk.Artifact) error {
 		if len(artifacts) > 1 {
 			return fmt.Errorf("more than 1 artifact")
