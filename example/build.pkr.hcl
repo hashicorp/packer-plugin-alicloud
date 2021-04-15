@@ -1,40 +1,25 @@
-packer {
-  required_plugins {
-    scaffolding = {
-      version = ">=v0.1.0"
-      source  = "github.com/hashicorp/scaffolding"
-    }
-  }
-}
+// This assumes you have env vars ALICLOUD_ACCESS_KEY, ALICLOUD_SECRET_KEY,
+// and ALICLOUD_REGION set.
 
-source "scaffolding-my-builder" "foo-example" {
-  mock = local.foo
-}
-
-source "scaffolding-my-builder" "bar-example" {
-  mock = local.bar
+source "alicloud-ecs" "test" {
+  image_name           = "packer_basic"
+  source_image         = "centos_7_03_64_20G_alibase_20170818.vhd"
+  ssh_username         = "root"
+  instance_type        = "ecs.t5-lc1m1.small"
+  internet_charge_type = "PayByTraffic"
+  io_optimized         = "true"
 }
 
 build {
-  sources = [
-    "source.scaffolding-my-builder.foo-example",
-  ]
+  sources = ["source.alicloud-ecs.test"]
 
-  source "source.scaffolding-my-builder.bar-example" {
-    name = "bar"
+  provisioner "shell" {
+    inline = [
+      "sleep 30",
+      "yum install redis.x86_64 -y"
+    ]
   }
-
-  provisioner "scaffolding-my-provisioner" {
-    only = ["scaffolding-my-builder.foo-example"]
-    mock = "foo: ${local.foo}"
-  }
-
-  provisioner "scaffolding-my-provisioner" {
-    only = ["scaffolding-my-builder.bar"]
-    mock = "bar: ${local.bar}"
-  }
-
-  post-processor "scaffolding-my-post-processor" {
-    mock = "post-processor mock-config"
+  post-processor "manifest" {
+    output = "alicloud-manifest.json"
   }
 }

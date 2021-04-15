@@ -1,4 +1,4 @@
-# Scaffolding Plugins
+# Alicloud Plugins
 
 <!--
   Include a short overview about the plugin.
@@ -9,17 +9,8 @@
 
 -->
 
-The Scaffolding plugin is intended as a starting point for creating Packer plugins, containing:
+The Alicloud plugin is intended as a starting point for creating Packer plugins, containing:
 
-- [builder](/docs/builders/builder-name.mdx) - The scaffolding builder is used to create endless Packer
-  plugins using a consistent plugin structure.
+- [alicloud-ecs builder](/docs/builders/alicloud-ecs.mdx) - provides the capability to build customized images based on an existing base image.
 
-- [provisioner](/docs/provisioners/provisioner-name.mdx) - The scaffolding provisioner is used to provisioner
-  Packer builds.
-
-- [post-processor](/docs/post-processors/postprocessor-name.mdx) - The scaffolding post-processor is used to
-  export scaffolding builds.
-
-- [data source](/docs/datasources/datasource-name.mdx) - The scaffolding data source is used to
-  export scaffolding data.
-
+- [alicloud-import post-processor](/docs/post-processors/alicloud-import.mdx) - Takes a RAW or VHD artifact from various builders and imports it to an Alicloud ECS Image.

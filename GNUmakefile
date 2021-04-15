@@ -1,4 +1,4 @@
-NAME=scaffolding
+NAME=alicloud
 BINARY=packer-plugin-${NAME}
 
 COUNT?=1
