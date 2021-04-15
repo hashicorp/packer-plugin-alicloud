@@ -12,5 +12,3 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/zclconf/go-cty v1.8.1
 )
-
-replace github.com/hashicorp/packer-plugin-sdk => /Users/mmarsh/Projects/packer-plugin-sdk

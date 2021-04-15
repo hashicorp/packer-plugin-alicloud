@@ -18,10 +18,10 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ram"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/hashicorp/hcl/v2/hcldec"
+	packerecs "github.com/hashicorp/packer-plugin-alicloud/builder/ecs"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
-	packerecs "github.com/hashicorp/packer/builder/alicloud/ecs"
 )
 
 const (
