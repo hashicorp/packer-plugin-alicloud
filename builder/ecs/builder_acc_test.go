@@ -10,7 +10,8 @@ import (
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/hashicorp/packer-plugin-sdk/acctest"
-	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
+	"github.com/hashicorp/packer-plugin-sdk/acctest/testutils"
+	"github.com/hashicorp/packer-plugin-sdk/uuid"
 )
 
 const defaultTestRegion = "cn-beijing"
@@ -20,12 +21,9 @@ type TestCheckFunc func(*exec.Cmd, string) error
 func TestBuilderAcc_validateRegion(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv(acctest.TestEnvVar) == "" {
-		t.Skip(fmt.Sprintf("Acceptance tests skipped unless env '%s' set", acctest.TestEnvVar))
+	if skip := testAccPreCheck(t); skip == true {
 		return
 	}
-
-	testAccPreCheck(t)
 
 	access := &AlicloudAccessConfig{AlicloudRegion: "cn-beijing"}
 	err := access.Config()
@@ -46,13 +44,10 @@ func TestBuilderAcc_validateRegion(t *testing.T) {
 
 func TestBuilderAcc_basic(t *testing.T) {
 	t.Parallel()
+	testAccPreCheck(t)
 	acctest.TestPlugin(t, &acctest.PluginTestCase{
-		Name: "test-alicloud-builder-basic",
-		Type: "alicloud-ecs",
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Builder:  &Builder{},
+		Name:     "test-alicloud-builder-basic",
+		Type:     "alicloud-ecs",
 		Template: testBuilderAccBasic,
 	})
 }
@@ -71,15 +66,18 @@ const testBuilderAccBasic = `
 
 func TestBuilderAcc_withDiskSettings(t *testing.T) {
 	t.Parallel()
+	outputfilename := fmt.Sprintf("test-manifest-%s.json", uuid.TimeOrderedUUID())
+	if skip := testAccPreCheck(t); skip == true {
+		return
+	}
 	acctest.TestPlugin(t, &acctest.PluginTestCase{
-		Name: "test-alicloud-builder-with-disk-settings",
-		Type: "alicloud-ecs",
-		PreCheck: func() {
-			testAccPreCheck(t)
+		Name:     "test-alicloud-builder-with-disk-settings",
+		Type:     "alicloud-ecs",
+		Template: fmt.Sprintf(testBuilderAccWithDiskSettings, outputfilename),
+		Check:    checkImageDisksSettings(outputfilename),
+		Teardown: func() error {
+			return os.Remove(outputfilename)
 		},
-		Builder:  &Builder{},
-		Template: testBuilderAccWithDiskSettings,
-		Check:    checkImageDisksSettings(),
 	})
 }
 
@@ -107,24 +105,25 @@ const testBuilderAccWithDiskSettings = `
 				"disk_delete_with_instance": true
 			}
 		]
+	}],
+	"post-processors": [{
+		"type": "manifest",
+		"output": "%s"
 	}]
 }`
 
-func checkImageDisksSettings() TestCheckFunc {
+func checkImageDisksSettings(manifestfilepath string) TestCheckFunc {
 	return func(buildCommand *exec.Cmd, logfile string) error {
-		// load manifest, read artifact names, and check them
+		regionArtifacts, err := loadArtifacts(manifestfilepath)
+		if err != nil {
+			return fmt.Errorf("could not load manifest: %s", err)
+		}
 
-		if len(artifacts) > 1 {
+		if len(regionArtifacts) > 1 {
 			return fmt.Errorf("more than 1 artifact")
 		}
 
-		// Get the actual *Artifact pointer so we can access the AMIs directly
-		artifactRaw := artifacts[0]
-		artifact, ok := artifactRaw.(*Artifact)
-		if !ok {
-			return fmt.Errorf("unknown artifact: %#v", artifactRaw)
-		}
-		imageId := artifact.AlicloudImages[defaultTestRegion]
+		imageId := regionArtifacts[defaultTestRegion]
 
 		// describe the image, get block devices with a snapshot
 		client, _ := testAliyunClient()
@@ -200,15 +199,18 @@ func checkImageDisksSettings() TestCheckFunc {
 
 func TestBuilderAcc_withIgnoreDataDisks(t *testing.T) {
 	t.Parallel()
+	if skip := testAccPreCheck(t); skip == true {
+		return
+	}
+	outputfilename := fmt.Sprintf("test-manifest-%s.json", uuid.TimeOrderedUUID())
 	acctest.TestPlugin(t, &acctest.PluginTestCase{
-		Name: "test-alicloud-builder-with-ignore-data-disks",
-		Type: "alicloud-ecs",
-		PreCheck: func() {
-			testAccPreCheck(t)
+		Name:     "test-alicloud-builder-with-ignore-data-disks",
+		Type:     "alicloud-ecs",
+		Template: fmt.Sprintf(testBuilderAccIgnoreDataDisks, outputfilename),
+		Check:    checkIgnoreDataDisks(outputfilename),
+		Teardown: func() error {
+			return os.Remove(outputfilename)
 		},
-		Builder:  &Builder{},
-		Template: testBuilderAccIgnoreDataDisks,
-		Check:    checkIgnoreDataDisks(),
 	})
 }
 
@@ -222,22 +224,25 @@ const testBuilderAccIgnoreDataDisks = `
 		"ssh_username":"root",
 		"image_name": "packer-test-ignoreDataDisks_{{timestamp}}",
 		"image_ignore_data_disks": true
+	}],
+	"post-processors": [{
+		"type": "manifest",
+		"output": "%s"
 	}]
 }`
 
-func checkIgnoreDataDisks() TestCheckFunc {
-	return func(artifacts []packersdk.Artifact) error {
-		if len(artifacts) > 1 {
+func checkIgnoreDataDisks(manifestfilepath string) TestCheckFunc {
+	return func(buildCommand *exec.Cmd, logfile string) error {
+		regionArtifacts, err := loadArtifacts(manifestfilepath)
+		if err != nil {
+			return fmt.Errorf("could not load manifest: %s", err)
+		}
+
+		if len(regionArtifacts) > 1 {
 			return fmt.Errorf("more than 1 artifact")
 		}
 
-		// Get the actual *Artifact pointer so we can access the AMIs directly
-		artifactRaw := artifacts[0]
-		artifact, ok := artifactRaw.(*Artifact)
-		if !ok {
-			return fmt.Errorf("unknown artifact: %#v", artifactRaw)
-		}
-		imageId := artifact.AlicloudImages[defaultTestRegion]
+		imageId := regionArtifacts[defaultTestRegion]
 
 		// describe the image, get block devices with a snapshot
 		client, _ := testAliyunClient()
@@ -265,13 +270,13 @@ func checkIgnoreDataDisks() TestCheckFunc {
 
 func TestBuilderAcc_windows(t *testing.T) {
 	t.Parallel()
+	if skip := testAccPreCheck(t); skip == true {
+		return
+	}
+
 	acctest.TestPlugin(t, &acctest.PluginTestCase{
-		Name: "test-alicloud-builder-windows",
-		Type: "alicloud-ecs",
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Builder:  &Builder{},
+		Name:     "test-alicloud-builder-windows",
+		Type:     "alicloud-ecs",
 		Template: testBuilderAccWindows,
 	})
 }
@@ -294,15 +299,18 @@ const testBuilderAccWindows = `
 
 func TestBuilderAcc_regionCopy(t *testing.T) {
 	t.Parallel()
+	if skip := testAccPreCheck(t); skip == true {
+		return
+	}
+	outputfilename := fmt.Sprintf("test-manifest-%s.json", uuid.TimeOrderedUUID())
 	acctest.TestPlugin(t, &acctest.PluginTestCase{
-		Name: "test-alicloud-builder-region-copy",
-		Type: "alicloud",
-		PreCheck: func() {
-			testAccPreCheck(t)
+		Name:     "test-alicloud-builder-region-copy",
+		Type:     "alicloud",
+		Template: fmt.Sprintf(testBuilderAccRegionCopy, outputfilename),
+		Check:    checkRegionCopy([]string{"cn-hangzhou", "cn-shenzhen"}, outputfilename),
+		Teardown: func() error {
+			return os.Remove(outputfilename)
 		},
-		Builder:  &Builder{},
-		Template: testBuilderAccRegionCopy,
-		Check:    checkRegionCopy([]string{"cn-hangzhou", "cn-shenzhen"}),
 	})
 }
 
@@ -318,21 +326,19 @@ const testBuilderAccRegionCopy = `
 		"image_name": "packer-test-regionCopy_{{timestamp}}",
 		"image_copy_regions": ["cn-hangzhou", "cn-shenzhen"],
 		"image_copy_names": ["packer-copy-test-hz_{{timestamp}}", "packer-copy-test-sz_{{timestamp}}"]
+	}],
+	"post-processors": [{
+		"type": "manifest",
+		"output": "%s"
 	}]
 }
 `
 
-func checkRegionCopy(regions []string) TestCheckFunc {
-	return func(artifacts []packersdk.Artifact) error {
-		if len(artifacts) > 1 {
-			return fmt.Errorf("more than 1 artifact")
-		}
-
-		// Get the actual *Artifact pointer so we can access the AMIs directly
-		artifactRaw := artifacts[0]
-		artifact, ok := artifactRaw.(*Artifact)
-		if !ok {
-			return fmt.Errorf("unknown artifact: %#v", artifactRaw)
+func checkRegionCopy(regions []string, manifestfilepath string) TestCheckFunc {
+	return func(buildCommand *exec.Cmd, logfile string) error {
+		regionArtifacts, err := loadArtifacts(manifestfilepath)
+		if err != nil {
+			return fmt.Errorf("could not load manifest: %s", err)
 		}
 
 		// Verify that we copied to only the regions given
@@ -341,7 +347,7 @@ func checkRegionCopy(regions []string) TestCheckFunc {
 			regionSet[r] = struct{}{}
 		}
 
-		for r := range artifact.AlicloudImages {
+		for r := range regionArtifacts {
 			if r == "cn-beijing" {
 				delete(regionSet, r)
 				continue
@@ -359,7 +365,7 @@ func checkRegionCopy(regions []string) TestCheckFunc {
 		}
 
 		client, _ := testAliyunClient()
-		for regionId, imageId := range artifact.AlicloudImages {
+		for regionId, imageId := range regionArtifacts {
 			describeImagesRequest := ecs.CreateDescribeImagesRequest()
 			describeImagesRequest.RegionId = regionId
 			describeImagesRequest.ImageId = imageId
@@ -387,25 +393,19 @@ func checkRegionCopy(regions []string) TestCheckFunc {
 
 func TestBuilderAcc_forceDelete(t *testing.T) {
 	t.Parallel()
+	if skip := testAccPreCheck(t); skip == true {
+		return
+	}
 	// Build the same alicloud image twice, with ecs_image_force_delete on the second run
 	acctest.TestPlugin(t, &acctest.PluginTestCase{
-		Name: "test-alicloud-builder-force-delete",
-		Type: "alicloud-ecs",
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Builder:              &Builder{},
-		Template:             buildForceDeregisterConfig("false", "delete"),
-		SkipArtifactTeardown: true,
+		Name:     "test-alicloud-builder-force-delete",
+		Type:     "alicloud-ecs",
+		Template: buildForceDeregisterConfig("false", "delete"),
 	})
 
 	acctest.TestPlugin(t, &acctest.PluginTestCase{
-		Name: "test-alicloud-builder-force-delete-2",
-		Type: "alicloud-ecs",
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Builder:  &Builder{},
+		Name:     "test-alicloud-builder-force-delete-2",
+		Type:     "alicloud-ecs",
 		Template: buildForceDeregisterConfig("true", "delete"),
 	})
 }
@@ -431,15 +431,18 @@ const testBuilderAccForceDelete = `
 
 func TestBuilderAcc_ECSImageSharing(t *testing.T) {
 	t.Parallel()
+	if skip := testAccPreCheck(t); skip == true {
+		return
+	}
+	outputfilename := fmt.Sprintf("test-manifest-%s.json", uuid.TimeOrderedUUID())
 	acctest.TestPlugin(t, &acctest.PluginTestCase{
-		Name: "test-alicloud-builder-image-sharing",
-		Type: "alicloud-ecs",
-		PreCheck: func() {
-			testAccPreCheck(t)
+		Name:     "test-alicloud-builder-image-sharing",
+		Type:     "alicloud-ecs",
+		Template: fmt.Sprintf(testBuilderAccSharing, outputfilename),
+		Check:    checkECSImageSharing("1309208528360047", outputfilename),
+		Teardown: func() error {
+			return os.Remove(outputfilename)
 		},
-		Builder:  &Builder{},
-		Template: testBuilderAccSharing,
-		Check:    checkECSImageSharing("1309208528360047"),
 	})
 }
 
@@ -454,21 +457,19 @@ const testBuilderAccSharing = `
 		"ssh_username":"root",
 		"image_name": "packer-test-ECSImageSharing_{{timestamp}}",
 		"image_share_account":["1309208528360047"]
+	}],
+	"post-processors": [{
+		"type": "manifest",
+		"output": "%s"
 	}]
 }
 `
 
-func checkECSImageSharing(uid string) TestCheckFunc {
-	return func(artifacts []packersdk.Artifact) error {
-		if len(artifacts) > 1 {
-			return fmt.Errorf("more than 1 artifact")
-		}
-
-		// Get the actual *Artifact pointer so we can access the AMIs directly
-		artifactRaw := artifacts[0]
-		artifact, ok := artifactRaw.(*Artifact)
-		if !ok {
-			return fmt.Errorf("unknown artifact: %#v", artifactRaw)
+func checkECSImageSharing(uid string, manifestfilepath string) TestCheckFunc {
+	return func(buildCommand *exec.Cmd, logfile string) error {
+		regionArtifacts, err := loadArtifacts(manifestfilepath)
+		if err != nil {
+			return fmt.Errorf("could not load manifest: %s", err)
 		}
 
 		// describe the image, get block devices with a snapshot
@@ -476,12 +477,12 @@ func checkECSImageSharing(uid string) TestCheckFunc {
 
 		describeImageShareRequest := ecs.CreateDescribeImageSharePermissionRequest()
 		describeImageShareRequest.RegionId = "cn-beijing"
-		describeImageShareRequest.ImageId = artifact.AlicloudImages["cn-beijing"]
+		describeImageShareRequest.ImageId = regionArtifacts["cn-beijing"]
 		imageShareResponse, err := client.DescribeImageSharePermission(describeImageShareRequest)
 
 		if err != nil {
 			return fmt.Errorf("Error retrieving Image Attributes for ECS Image Artifact (%#v) "+
-				"in ECS Image Sharing Test: %s", artifact, err)
+				"in ECS Image Sharing Test: %s", regionArtifacts["cn-beijing"], err)
 		}
 
 		if len(imageShareResponse.Accounts.Account) != 1 && imageShareResponse.Accounts.Account[0].AliyunId != uid {
@@ -494,18 +495,16 @@ func checkECSImageSharing(uid string) TestCheckFunc {
 
 func TestBuilderAcc_forceDeleteSnapshot(t *testing.T) {
 	t.Parallel()
+	if skip := testAccPreCheck(t); skip == true {
+		return
+	}
 	destImageName := "delete"
 
 	// Build the same alicloud image name twice, with force_delete_snapshot on the second run
 	acctest.TestPlugin(t, &acctest.PluginTestCase{
-		Name: "test-alicloud-builder-force-delete-snapshot",
-		Type: "alicloud-ecs",
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Builder:              &Builder{},
-		Template:             buildForceDeleteSnapshotConfig("false", destImageName),
-		SkipArtifactTeardown: true,
+		Name:     "test-alicloud-builder-force-delete-snapshot",
+		Type:     "alicloud-ecs",
+		Template: buildForceDeleteSnapshotConfig("false", destImageName),
 	})
 
 	// Get image data by image image name
@@ -526,11 +525,9 @@ func TestBuilderAcc_forceDeleteSnapshot(t *testing.T) {
 		}
 	}
 
-	builderT.Test(t, builderT.TestCase{
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Builder:  &Builder{},
+	acctest.TestPlugin(t, &acctest.PluginTestCase{
+		Name:     "test-alicloud-builder-force-delete-snapshot-true",
+		Type:     "alicloud-ecs",
 		Template: buildForceDeleteSnapshotConfig("true", destImageName),
 		Check:    checkSnapshotsDeleted(snapshotIds),
 	})
@@ -583,15 +580,15 @@ func checkSnapshotsDeleted(snapshotIds []string) TestCheckFunc {
 
 func TestBuilderAcc_imageTags(t *testing.T) {
 	t.Parallel()
+	if skip := testAccPreCheck(t); skip == true {
+		return
+	}
+	outputfilename := fmt.Sprintf("test-manifest-%s.json", uuid.TimeOrderedUUID())
 	acctest.TestPlugin(t, &acctest.PluginTestCase{
-		Name: "test-alicloud-builder-image-tags",
-		Type: "alicloud-ecs",
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Builder:  &Builder{},
-		Template: testBuilderAccImageTags,
-		Check:    checkImageTags(),
+		Name:     "test-alicloud-builder-image-tags",
+		Type:     "alicloud-ecs",
+		Template: fmt.Sprintf(testBuilderAccImageTags, outputfilename),
+		Check:    checkImageTags(outputfilename),
 	})
 }
 
@@ -608,21 +605,25 @@ const testBuilderAccImageTags = `
 			"TagKey1": "TagValue1",
 			"TagKey2": "TagValue2"
        }
+	}],
+	"post-processors": [{
+		"type": "manifest",
+		"output": "%s"
 	}]
 }`
 
-func checkImageTags() TestCheckFunc {
-	return func(artifacts []packersdk.Artifact) error {
-		if len(artifacts) > 1 {
+func checkImageTags(manifestfilepath string) TestCheckFunc {
+	return func(buildCommand *exec.Cmd, logfile string) error {
+		regionArtifacts, err := loadArtifacts(manifestfilepath)
+		if err != nil {
+			return fmt.Errorf("could not load manifest: %s", err)
+		}
+
+		if len(regionArtifacts) > 1 {
 			return fmt.Errorf("more than 1 artifact")
 		}
-		// Get the actual *Artifact pointer so we can access the AMIs directly
-		artifactRaw := artifacts[0]
-		artifact, ok := artifactRaw.(*Artifact)
-		if !ok {
-			return fmt.Errorf("unknown artifact: %#v", artifactRaw)
-		}
-		imageId := artifact.AlicloudImages[defaultTestRegion]
+
+		imageId := regionArtifacts[defaultTestRegion]
 
 		// describe the image, get block devices with a snapshot
 		client, _ := testAliyunClient()
@@ -634,7 +635,7 @@ func checkImageTags() TestCheckFunc {
 		imageTagsResponse, err := client.DescribeTags(describeImageTagsRequest)
 		if err != nil {
 			return fmt.Errorf("Error retrieving Image Attributes for ECS Image Artifact (%#v) "+
-				"in ECS Image Tags Test: %s", artifact, err)
+				"in ECS Image Tags Test: %s", regionArtifacts, err)
 		}
 
 		if len(imageTagsResponse.Tags.Tag) != 2 {
@@ -699,15 +700,15 @@ func checkImageTags() TestCheckFunc {
 
 func TestBuilderAcc_dataDiskEncrypted(t *testing.T) {
 	t.Parallel()
+	if skip := testAccPreCheck(t); skip == true {
+		return
+	}
+	outputfilename := fmt.Sprintf("test-manifest-%s.json", uuid.TimeOrderedUUID())
 	acctest.TestPlugin(t, &acctest.PluginTestCase{
-		Name: "test-alicloud-builder-data-disk-encrypted",
-		Type: "alicloud-ecs",
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Builder:  &Builder{},
-		Template: testBuilderAccDataDiskEncrypted,
-		Check:    checkDataDiskEncrypted(),
+		Name:     "test-alicloud-builder-data-disk-encrypted",
+		Type:     "alicloud-ecs",
+		Template: fmt.Sprintf(testBuilderAccDataDiskEncrypted, outputfilename),
+		Check:    checkDataDiskEncrypted(outputfilename),
 	})
 }
 
@@ -739,22 +740,25 @@ const testBuilderAccDataDiskEncrypted = `
 				"disk_delete_with_instance": true
 			}
 		]
+	}],
+	"post-processors": [{
+		"type": "manifest",
+		"output": "%s"
 	}]
 }`
 
-func checkDataDiskEncrypted() TestCheckFunc {
-	return func(artifacts []packersdk.Artifact) error {
-		if len(artifacts) > 1 {
+func checkDataDiskEncrypted(manifestfilepath string) TestCheckFunc {
+	return func(buildCommand *exec.Cmd, logfile string) error {
+		regionArtifacts, err := loadArtifacts(manifestfilepath)
+		if err != nil {
+			return fmt.Errorf("could not load manifest: %s", err)
+		}
+
+		if len(regionArtifacts) > 1 {
 			return fmt.Errorf("more than 1 artifact")
 		}
 
-		// Get the actual *Artifact pointer so we can access the AMIs directly
-		artifactRaw := artifacts[0]
-		artifact, ok := artifactRaw.(*Artifact)
-		if !ok {
-			return fmt.Errorf("unknown artifact: %#v", artifactRaw)
-		}
-		imageId := artifact.AlicloudImages[defaultTestRegion]
+		imageId := regionArtifacts[defaultTestRegion]
 
 		// describe the image, get block devices with a snapshot
 		client, _ := testAliyunClient()
@@ -817,15 +821,15 @@ func checkDataDiskEncrypted() TestCheckFunc {
 
 func TestBuilderAcc_systemDiskEncrypted(t *testing.T) {
 	t.Parallel()
+	if skip := testAccPreCheck(t); skip == true {
+		return
+	}
+	outputfilename := fmt.Sprintf("test-manifest-%s.json", uuid.TimeOrderedUUID())
 	acctest.TestPlugin(t, &acctest.PluginTestCase{
-		Name: "test-alicloud-builder-system-disk-encrypted",
-		Type: "alicloud-ecs",
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Builder:  &Builder{},
-		Template: testBuilderAccSystemDiskEncrypted,
-		Check:    checkSystemDiskEncrypted(),
+		Name:     "test-alicloud-builder-system-disk-encrypted",
+		Type:     "alicloud-ecs",
+		Template: fmt.Sprintf(testBuilderAccSystemDiskEncrypted, outputfilename),
+		Check:    checkSystemDiskEncrypted(outputfilename),
 	})
 }
 
@@ -840,25 +844,27 @@ const testBuilderAccSystemDiskEncrypted = `
 		"ssh_username":"root",
 		"image_name": "packer-test_{{timestamp}}",
 		"image_encrypted": "true"
+	}],
+	"post-processors": [{
+		"type": "manifest",
+		"output": "%s"
 	}]
 }`
 
-func checkSystemDiskEncrypted() TestCheckFunc {
-	return func(artifacts []packersdk.Artifact) error {
-		if len(artifacts) > 1 {
+func checkSystemDiskEncrypted(manifestfilepath string) TestCheckFunc {
+	return func(buildCommand *exec.Cmd, logfile string) error {
+		regionArtifacts, err := loadArtifacts(manifestfilepath)
+		if err != nil {
+			return fmt.Errorf("could not load manifest: %s", err)
+		}
+
+		if len(regionArtifacts) > 1 {
 			return fmt.Errorf("more than 1 artifact")
 		}
 
-		// Get the actual *Artifact pointer so we can access the AMIs directly
-		artifactRaw := artifacts[0]
-		artifact, ok := artifactRaw.(*Artifact)
-		if !ok {
-			return fmt.Errorf("unknown artifact: %#v", artifactRaw)
-		}
-
+		imageId := regionArtifacts[defaultTestRegion]
 		// describe the image, get block devices with a snapshot
 		client, _ := testAliyunClient()
-		imageId := artifact.AlicloudImages[defaultTestRegion]
 
 		describeImagesRequest := ecs.CreateDescribeImagesRequest()
 		describeImagesRequest.RegionId = defaultTestRegion
@@ -895,14 +901,24 @@ func checkSystemDiskEncrypted() TestCheckFunc {
 	}
 }
 
-func testAccPreCheck(t *testing.T) {
+func testAccPreCheck(t *testing.T) bool {
+	if os.Getenv(acctest.TestEnvVar) == "" {
+		t.Skip(fmt.Sprintf(
+			"Acceptance tests skipped unless env '%s' set",
+			acctest.TestEnvVar))
+		return true
+	}
+
 	if v := os.Getenv("ALICLOUD_ACCESS_KEY"); v == "" {
 		t.Fatal("ALICLOUD_ACCESS_KEY must be set for acceptance tests")
+		return true
 	}
 
 	if v := os.Getenv("ALICLOUD_SECRET_KEY"); v == "" {
 		t.Fatal("ALICLOUD_SECRET_KEY must be set for acceptance tests")
+		return true
 	}
+	return false
 }
 
 func testAliyunClient() (*ClientWrapper, error) {
@@ -917,4 +933,28 @@ func testAliyunClient() (*ClientWrapper, error) {
 	}
 
 	return client, nil
+}
+
+// loads the manifest file, and reads the artifact ids from the manifest,
+// returning a map[region]artifact_id
+// To make sure this works, you must make sure the manifestfilepath is unique.
+func loadArtifacts(manifestfilepath string) (map[string]string, error) {
+	regionArtifacts := map[string]string{}
+	// load manifest, read artifact names, and check them
+	manifest, err := testutils.GetArtifact(manifestfilepath)
+	if err != nil {
+		return regionArtifacts, fmt.Errorf("Error loading artifacts from manifest")
+	}
+
+	regionArtifactsString := manifest.Builds[0].ArtifactId
+	regionStrings := strings.Split(regionArtifactsString, ",")
+	for _, rstring := range regionStrings {
+		artifact := strings.Split(rstring, ":")
+		if len(artifact) != 2 {
+			return regionArtifacts, fmt.Errorf("Malformed manifest: artifact is %s", rstring)
+		}
+		regionArtifacts[artifact[0]] = artifact[1]
+	}
+
+	return regionArtifacts, nil
 }

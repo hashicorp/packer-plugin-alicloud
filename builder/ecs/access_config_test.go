@@ -16,6 +16,10 @@ func testAlicloudAccessConfig() *AlicloudAccessConfig {
 func TestAlicloudAccessConfigPrepareRegion(t *testing.T) {
 	c := testAlicloudAccessConfig()
 
+	if v := os.Getenv("ALICLOUD_REGION"); v != "" {
+		os.Unsetenv("ALICLOUD_REGION")
+		defer os.Setenv("ALICLOUD_REGION", v)
+	}
 	c.AlicloudRegion = ""
 	if err := c.Prepare(nil); err == nil {
 		t.Fatalf("should have err")
@@ -32,6 +36,16 @@ func TestAlicloudAccessConfigPrepareRegion(t *testing.T) {
 		t.Fatalf("shouldn't have err: %s", err)
 	}
 
+	// store access key and reset it after tests.
+	if v := os.Getenv("ALICLOUD_ACCESS_KEY"); v != "" {
+		os.Unsetenv("ALICLOUD_ACCESS_KEY")
+		defer os.Setenv("ALICLOUD_ACCESS_KEY", v)
+	}
+	// store profile and reset it after tests.
+	if v := os.Getenv("ALICLOUD_PROFILE"); v != "" {
+		os.Unsetenv("ALICLOUD_PROFILE")
+		defer os.Setenv("ALICLOUD_PROFILE", v)
+	}
 	c.AlicloudAccessKey = ""
 	if err := c.Prepare(nil); err == nil {
 		t.Fatalf("should have err")
