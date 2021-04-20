@@ -18,7 +18,7 @@ Then, run [`packer init`](https://www.packer.io/docs/commands/init).
 ```hcl
 packer {
   required_plugins {
-    Alicloud = {
+    alicloud = {
       version = ">= 0.0.1"
       source  = "github.com/hashicorp/alicloud"
     }
@@ -29,18 +29,18 @@ packer {
 
 #### Manual installation
 
-You can find pre-built binary releases of the plugin [here](https://github.com/hashicorp/packer-plugin-Alicloud/releases).
+You can find pre-built binary releases of the plugin [here](https://github.com/hashicorp/packer-plugin-alicloud/releases).
 Once you have downloaded the latest archive corresponding to your target OS,
 uncompress it to retrieve the plugin binary file corresponding to your platform.
 To install the plugin, please follow the Packer documentation on
 [installing a plugin](https://www.packer.io/docs/extending/plugins/#installing-plugins).
 
 
-### From Source
+### From Sources
 
-If you prefer to build the plugin from source code, clone the GitHub repository
+If you prefer to build the plugin from sources, clone the GitHub repository
 locally and run the command `go build` from the root
-directory. Upon successful compilation, a `packer-plugin-Alicloud` plugin
+directory. Upon successful compilation, a `packer-plugin-alicloud` plugin
 binary file can be found in the root directory.
 To install the compiled plugin, please follow the official Packer documentation
 on [installing a plugin](https://www.packer.io/docs/extending/plugins/#installing-plugins).
