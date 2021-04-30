@@ -7,7 +7,7 @@ require (
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.8+incompatible
 	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
-	github.com/hashicorp/hcl/v2 v2.9.1
+	github.com/hashicorp/hcl/v2 v2.10.0
 	github.com/hashicorp/packer-plugin-sdk v0.2.0
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
