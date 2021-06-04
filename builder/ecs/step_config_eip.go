@@ -159,7 +159,7 @@ func (s *stepConfigAlicloudEIP) buildAllocateEipAddressRequest(state multistep.S
 	request.ClientToken = uuid.TimeOrderedUUID()
 	request.RegionId = instance.RegionId
 	request.InternetChargeType = s.InternetChargeType
-	request.Bandwidth = string(convertNumber(s.InternetMaxBandwidthOut))
+	request.Bandwidth = convertNumber(s.InternetMaxBandwidthOut)
 
 	return request
 }

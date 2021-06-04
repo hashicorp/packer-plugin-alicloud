@@ -33,6 +33,7 @@ func TestWaitForExpectedExceedRetryTimes(t *testing.T) {
 		waitDone <- true
 	}()
 
+	//nolint
 	select {
 	case <-waitDone:
 		if iter != defaultRetryTimes {
