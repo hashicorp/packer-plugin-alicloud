@@ -115,7 +115,6 @@ const (
 	defaultRetryTimes    = 12
 	shortRetryTimes      = 36
 	mediumRetryTimes     = 360
-	longRetryTimes       = 720
 )
 
 type WaitForExpectEvalResult struct {

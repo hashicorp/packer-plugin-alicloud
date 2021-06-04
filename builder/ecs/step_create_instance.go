@@ -22,7 +22,6 @@ type stepCreateAlicloudInstance struct {
 	InstanceType            string
 	UserData                string
 	UserDataFile            string
-	instanceId              string
 	RamRoleName             string
 	RegionId                string
 	InternetChargeType      string
@@ -173,7 +172,7 @@ func (s *stepCreateAlicloudInstance) buildCreateInstanceRequest(state multistep.
 		var dataDisk ecs.CreateInstanceDataDisk
 		dataDisk.DiskName = imageDisk.DiskName
 		dataDisk.Category = imageDisk.DiskCategory
-		dataDisk.Size = string(convertNumber(imageDisk.DiskSize))
+		dataDisk.Size = convertNumber(imageDisk.DiskSize)
 		dataDisk.SnapshotId = imageDisk.SnapshotId
 		dataDisk.Description = imageDisk.Description
 		dataDisk.DeleteWithInstance = strconv.FormatBool(imageDisk.DeleteWithInstance)

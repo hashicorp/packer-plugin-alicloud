@@ -1,14 +1,7 @@
 package ecs
 
 import (
-	"time"
-
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
-)
-
-var (
-	// modified in tests
-	sshHostSleepDuration = time.Second
 )
 
 type alicloudSSHHelper interface {
