@@ -1,5 +1,13 @@
 // This assumes you have env vars ALICLOUD_ACCESS_KEY, ALICLOUD_SECRET_KEY,
 // and ALICLOUD_REGION set.
+packer {
+  required_plugins {
+    alicloud = {
+      version = ">= 1.0.0"
+      source  = "github.com/hashicorp/alicloud"
+    }
+  }
+}
 
 source "alicloud-ecs" "test" {
   image_name           = "packer_basic"
