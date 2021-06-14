@@ -84,7 +84,7 @@ func (s *stepRegionCopyAlicloudImage) Cleanup(state multistep.StateBag) {
 	}
 
 	ui := state.Get("ui").(packersdk.Ui)
-	ui.Say(fmt.Sprintf("Stopping copy image because cancellation or error..."))
+	ui.Say("Stopping copy image because cancellation or error...")
 
 	client := state.Get("client").(*ClientWrapper)
 	alicloudImages := state.Get("alicloudimages").(map[string]string)
