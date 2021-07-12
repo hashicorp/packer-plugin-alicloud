@@ -91,6 +91,7 @@ type Config struct {
 	//   - cloud - 5 \~ 2000
 	//   - cloud_efficiency - 20 \~ 2048
 	//   - cloud_ssd - 20 \~ 2048
+	//   - cloud_essd - 20 \~ 2048
 	Size string `mapstructure:"image_system_size"`
 	// The format of the image for import, now alicloud only support RAW and
 	// VHD.

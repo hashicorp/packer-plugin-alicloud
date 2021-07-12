@@ -33,6 +33,9 @@ type RunConfig struct {
 	// This is the base image id which you want to
 	// create your customized images.
 	AlicloudSourceImage string `mapstructure:"source_image" required:"true"`
+	// The name of the image family. Customer can set this parameter to choose the latest available custom image from
+	// the specified image family to create the instance.
+	AlicloudImageFamily string `mapstructure:"image_family" required:"true"`
 	// Whether to force shutdown upon device
 	// restart. The default value is `false`.
 	//
@@ -61,6 +64,10 @@ type RunConfig struct {
 	// uppercase/lowercase letter or Chinese character. Can contain numbers, .,
 	// _ or -. It cannot begin with `http://` or `https://`.
 	SecurityGroupName string `mapstructure:"security_group_name" required:"false"`
+	// Specifies whether to enable security hardening. Valid values:
+	// Active: enables security hardening. This value is applicable only to public images.
+	// Deactive: does not enable security hardening. This value is applicable to all image types.
+	SecurityEnhancementStrategy string `mapstructure:"security_enhancement_strategy" required:"false"`
 	// User data to apply when launching the instance. Note
 	// that you need to be careful about escaping characters due to the templates
 	// being JSON. It is often more convenient to use user_data_file, instead.
@@ -132,12 +139,20 @@ func (c *RunConfig) Prepare(ctx *interpolate.Context) []error {
 
 	// Validation
 	errs := c.Comm.Prepare(ctx)
-	if c.AlicloudSourceImage == "" {
+	if c.AlicloudSourceImage == "" && c.AlicloudImageFamily == "" {
 		errs = append(errs, errors.New("A source_image must be specified"))
 	}
 
-	if strings.TrimSpace(c.AlicloudSourceImage) != c.AlicloudSourceImage {
+	if c.AlicloudSourceImage != "" && c.AlicloudImageFamily != "" {
+		errs = append(errs, errors.New("The image_family and source_image only can be set one"))
+	}
+
+	if c.AlicloudSourceImage != "" && strings.TrimSpace(c.AlicloudSourceImage) != c.AlicloudSourceImage {
 		errs = append(errs, errors.New("The source_image can't include spaces"))
+	}
+
+	if c.AlicloudImageFamily != "" && strings.TrimSpace(c.AlicloudImageFamily) != c.AlicloudImageFamily {
+		errs = append(errs, errors.New("The image_family can't include spaces"))
 	}
 
 	if c.InstanceType == "" {
