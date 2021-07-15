@@ -144,7 +144,7 @@ func (c *RunConfig) Prepare(ctx *interpolate.Context) []error {
 	}
 
 	if c.AlicloudSourceImage != "" && c.AlicloudImageFamily != "" {
-		errs = append(errs, errors.New("The image_family and source_image only can be set one"))
+		errs = append(errs, errors.New("An image_family and source_image can not be specified at the same time. Please use only one."))
 	}
 
 	if c.AlicloudSourceImage != "" && strings.TrimSpace(c.AlicloudSourceImage) != c.AlicloudSourceImage {
