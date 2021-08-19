@@ -18,19 +18,19 @@ import (
 )
 
 type stepCreateAlicloudInstance struct {
-	IOOptimized             confighelper.Trilean
-	InstanceType            string
-	UserData                string
-	UserDataFile            string
-	RamRoleName             string
-	RegionId                string
-	InternetChargeType      string
-	InternetMaxBandwidthOut int
-	InstanceName            string
-	ZoneId                  string
+	IOOptimized                 confighelper.Trilean
+	InstanceType                string
+	UserData                    string
+	UserDataFile                string
+	RamRoleName                 string
+	RegionId                    string
+	InternetChargeType          string
+	InternetMaxBandwidthOut     int
+	InstanceName                string
+	ZoneId                      string
 	SecurityEnhancementStrategy string
-	AlicloudImageFamily     string
-	instance                *ecs.Instance
+	AlicloudImageFamily         string
+	instance                    *ecs.Instance
 }
 
 var createInstanceRetryErrors = []string{
