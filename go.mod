@@ -13,7 +13,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
-	github.com/zclconf/go-cty v1.9.0
+	github.com/zclconf/go-cty v1.9.1
 	gopkg.in/ini.v1 v1.62.0 // indirect
 )
 
