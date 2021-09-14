@@ -10,14 +10,15 @@ import (
 
 func testBuilderConfig() map[string]interface{} {
 	return map[string]interface{}{
-		"access_key":    "foo",
-		"secret_key":    "bar",
-		"source_image":  "foo",
-		"instance_type": "ecs.n1.tiny",
-		"region":        "cn-beijing",
-		"ssh_username":  "root",
-		"image_name":    "foo",
-		"io_optimized":  true,
+		"access_key":          "foo",
+		"secret_key":          "bar",
+		"source_image":        "foo",
+		"instance_type":       "ecs.n1.tiny",
+		"region":              "cn-beijing",
+		"custom_endpoint_ecs": "ecs.aliyuncs.com",
+		"ssh_username":        "root",
+		"image_name":          "foo",
+		"io_optimized":        true,
 	}
 }
 

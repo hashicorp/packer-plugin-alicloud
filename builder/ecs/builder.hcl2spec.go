@@ -64,6 +64,7 @@ type FlatConfig struct {
 	AlicloudProfile                   *string                  `mapstructure:"profile" required:"false" cty:"profile" hcl:"profile"`
 	AlicloudSharedCredentialsFile     *string                  `mapstructure:"shared_credentials_file" required:"false" cty:"shared_credentials_file" hcl:"shared_credentials_file"`
 	SecurityToken                     *string                  `mapstructure:"security_token" required:"false" cty:"security_token" hcl:"security_token"`
+	CustomEndpointEcs                 *string                  `mapstructure:"custom_endpoint_ecs" required:"false" cty:"custom_endpoint_ecs" hcl:"custom_endpoint_ecs"`
 	AlicloudImageName                 *string                  `mapstructure:"image_name" required:"true" cty:"image_name" hcl:"image_name"`
 	AlicloudImageVersion              *string                  `mapstructure:"image_version" required:"false" cty:"image_version" hcl:"image_version"`
 	AlicloudImageDescription          *string                  `mapstructure:"image_description" required:"false" cty:"image_description" hcl:"image_description"`
@@ -184,6 +185,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"profile":                       &hcldec.AttrSpec{Name: "profile", Type: cty.String, Required: false},
 		"shared_credentials_file":       &hcldec.AttrSpec{Name: "shared_credentials_file", Type: cty.String, Required: false},
 		"security_token":                &hcldec.AttrSpec{Name: "security_token", Type: cty.String, Required: false},
+		"custom_endpoint_ecs":           &hcldec.AttrSpec{Name: "custom_endpoint_ecs", Type: cty.String, Required: false},
 		"image_name":                    &hcldec.AttrSpec{Name: "image_name", Type: cty.String, Required: false},
 		"image_version":                 &hcldec.AttrSpec{Name: "image_version", Type: cty.String, Required: false},
 		"image_description":             &hcldec.AttrSpec{Name: "image_description", Type: cty.String, Required: false},
