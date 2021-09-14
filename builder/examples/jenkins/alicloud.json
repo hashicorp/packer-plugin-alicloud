@@ -20,7 +20,7 @@
   "provisioners": [{
     "type": "file",
     "source": "examples/alicloud/jenkins/jenkins.sh",
-    "destination": "/root/"	
+    "destination": "/root/"
    },{
     "type": "shell",
     "inline": [

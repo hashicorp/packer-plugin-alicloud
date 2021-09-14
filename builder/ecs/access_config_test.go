@@ -63,4 +63,5 @@ func TestAlicloudAccessConfigPrepareRegion(t *testing.T) {
 	}
 
 	c.AlicloudSkipValidation = false
+	c.CustomEndpointEcs = ""
 }
