@@ -38,6 +38,10 @@
   uppercase/lowercase letter or Chinese character. Can contain numbers, .,
   _ or -. It cannot begin with `http://` or `https://`.
 
+- `security_enhancement_strategy` (string) - Specifies whether to enable security hardening. Valid values:
+  Active: enables security hardening. This value is applicable only to public images.
+  Deactive: does not enable security hardening. This value is applicable to all image types.
+
 - `user_data` (string) - User data to apply when launching the instance. Note
   that you need to be careful about escaping characters due to the templates
   being JSON. It is often more convenient to use user_data_file, instead.

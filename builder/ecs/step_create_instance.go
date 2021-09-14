@@ -18,17 +18,19 @@ import (
 )
 
 type stepCreateAlicloudInstance struct {
-	IOOptimized             confighelper.Trilean
-	InstanceType            string
-	UserData                string
-	UserDataFile            string
-	RamRoleName             string
-	RegionId                string
-	InternetChargeType      string
-	InternetMaxBandwidthOut int
-	InstanceName            string
-	ZoneId                  string
-	instance                *ecs.Instance
+	IOOptimized                 confighelper.Trilean
+	InstanceType                string
+	UserData                    string
+	UserDataFile                string
+	RamRoleName                 string
+	RegionId                    string
+	InternetChargeType          string
+	InternetMaxBandwidthOut     int
+	InstanceName                string
+	ZoneId                      string
+	SecurityEnhancementStrategy string
+	AlicloudImageFamily         string
+	instance                    *ecs.Instance
 }
 
 var createInstanceRetryErrors = []string{
@@ -117,10 +119,13 @@ func (s *stepCreateAlicloudInstance) buildCreateInstanceRequest(state multistep.
 	request.InstanceName = s.InstanceName
 	request.RamRoleName = s.RamRoleName
 	request.ZoneId = s.ZoneId
-
-	sourceImage := state.Get("source_image").(*ecs.Image)
-	request.ImageId = sourceImage.ImageId
-
+	request.SecurityEnhancementStrategy = s.SecurityEnhancementStrategy
+	if s.AlicloudImageFamily != "" {
+		request.ImageFamily = s.AlicloudImageFamily
+	} else {
+		sourceImage := state.Get("source_image").(*ecs.Image)
+		request.ImageId = sourceImage.ImageId
+	}
 	securityGroupId := state.Get("securitygroupid").(string)
 	request.SecurityGroupId = securityGroupId
 
