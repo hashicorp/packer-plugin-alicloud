@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/endpoints"
 	"github.com/hashicorp/packer-plugin-alicloud/version"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
 	"github.com/mitchellh/go-homedir"
@@ -42,7 +43,9 @@ type AlicloudAccessConfig struct {
 	// STS access token, can be set through template or by exporting as
 	// environment variable such as `export SECURITY_TOKEN=value`.
 	SecurityToken string `mapstructure:"security_token" required:"false"`
-
+	// This option is useful if you use a cloud provider whose API is
+	// compatible with aliyun ECS. Specify another endpoint with this option.
+	CustomEndpointEcs string `mapstructure:"custom_endpoint_ecs" required:"false"`
 	client *ClientWrapper
 }
 
@@ -71,6 +74,10 @@ func (c *AlicloudAccessConfig) Client() (*ClientWrapper, error) {
 		c.AlicloudSecretKey = getProviderConfig(c.AlicloudSecretKey, "access_key_secret")
 		c.AlicloudRegion = getProviderConfig(c.AlicloudRegion, "region_id")
 		c.SecurityToken = getProviderConfig(c.SecurityToken, "sts_token")
+		c.CustomEndpointEcs = getProviderConfig(c.CustomEndpointEcs, "endpoint")
+	}
+	if c.CustomEndpointEcs != "" && c.AlicloudRegion != "" {
+		endpoints.AddEndpointMapping(c.AlicloudRegion, "Ecs", c.CustomEndpointEcs)
 	}
 
 	client, err := ecs.NewClientWithStsToken(c.AlicloudRegion, c.AlicloudAccessKey, c.AlicloudSecretKey, c.SecurityToken)
