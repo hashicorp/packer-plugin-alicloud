@@ -15,6 +15,7 @@ func testBuilderConfig() map[string]interface{} {
 		"source_image":  "foo",
 		"instance_type": "ecs.n1.tiny",
 		"region":        "cn-beijing",
+		"custom_endpoint_ecs": "ecs.aliyuncs.com",
 		"ssh_username":  "root",
 		"image_name":    "foo",
 		"io_optimized":  true,
