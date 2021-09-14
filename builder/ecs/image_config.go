@@ -24,7 +24,6 @@ type AlicloudDiskDevice struct {
 	//     -   cloud - general cloud disk
 	//     -   cloud_efficiency - efficiency cloud disk
 	//     -   cloud_ssd - cloud SSD
-	//     -   cloud_essd - cloud ESSD
 	DiskCategory string `mapstructure:"disk_category" required:"false"`
 	// Size of the system disk, measured in GiB. Value
 	// range: [20, 500]. The specified value must be equal to or greater

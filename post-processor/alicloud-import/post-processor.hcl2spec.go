@@ -50,13 +50,11 @@ type FlatConfig struct {
 	InstanceType                      *string                      `mapstructure:"instance_type" required:"true" cty:"instance_type" hcl:"instance_type"`
 	Description                       *string                      `mapstructure:"description" cty:"description" hcl:"description"`
 	AlicloudSourceImage               *string                      `mapstructure:"source_image" required:"true" cty:"source_image" hcl:"source_image"`
-	AlicloudImageFamily               *string                      `mapstructure:"image_family" required:"false" cty:"image_family" hcl:"image_family"`
 	ForceStopInstance                 *bool                        `mapstructure:"force_stop_instance" required:"false" cty:"force_stop_instance" hcl:"force_stop_instance"`
 	DisableStopInstance               *bool                        `mapstructure:"disable_stop_instance" required:"false" cty:"disable_stop_instance" hcl:"disable_stop_instance"`
 	RamRoleName                       *string                      `mapstructure:"ram_role_name" required:"false" cty:"ram_role_name" hcl:"ram_role_name"`
 	SecurityGroupId                   *string                      `mapstructure:"security_group_id" required:"false" cty:"security_group_id" hcl:"security_group_id"`
 	SecurityGroupName                 *string                      `mapstructure:"security_group_name" required:"false" cty:"security_group_name" hcl:"security_group_name"`
-	SecurityEnhancementStrategy       *string                      `mapstructure:"security_enhancement_strategy" required:"false" cty:"security_enhancement_strategy" hcl:"security_enhancement_strategy"`
 	UserData                          *string                      `mapstructure:"user_data" required:"false" cty:"user_data" hcl:"user_data"`
 	UserDataFile                      *string                      `mapstructure:"user_data_file" required:"false" cty:"user_data_file" hcl:"user_data_file"`
 	VpcId                             *string                      `mapstructure:"vpc_id" required:"false" cty:"vpc_id" hcl:"vpc_id"`
@@ -178,13 +176,11 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"instance_type":                &hcldec.AttrSpec{Name: "instance_type", Type: cty.String, Required: false},
 		"description":                  &hcldec.AttrSpec{Name: "description", Type: cty.String, Required: false},
 		"source_image":                 &hcldec.AttrSpec{Name: "source_image", Type: cty.String, Required: false},
-		"image_family":                 &hcldec.AttrSpec{Name: "image_family", Type: cty.String, Required: false},
 		"force_stop_instance":          &hcldec.AttrSpec{Name: "force_stop_instance", Type: cty.Bool, Required: false},
 		"disable_stop_instance":        &hcldec.AttrSpec{Name: "disable_stop_instance", Type: cty.Bool, Required: false},
 		"ram_role_name":                &hcldec.AttrSpec{Name: "ram_role_name", Type: cty.String, Required: false},
 		"security_group_id":            &hcldec.AttrSpec{Name: "security_group_id", Type: cty.String, Required: false},
 		"security_group_name":          &hcldec.AttrSpec{Name: "security_group_name", Type: cty.String, Required: false},
-		"security_enhancement_strategy":&hcldec.AttrSpec{Name: "security_enhancement_strategy", Type: cty.String, Required: false},
 		"user_data":                    &hcldec.AttrSpec{Name: "user_data", Type: cty.String, Required: false},
 		"user_data_file":               &hcldec.AttrSpec{Name: "user_data_file", Type: cty.String, Required: false},
 		"vpc_id":                       &hcldec.AttrSpec{Name: "vpc_id", Type: cty.String, Required: false},
