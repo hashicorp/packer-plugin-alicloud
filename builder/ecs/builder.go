@@ -100,27 +100,16 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			AlicloudDestImageName: b.config.AlicloudImageName,
 			ForceDelete:           b.config.AlicloudImageForceDelete,
 		},
-	}
-
-	// Customer config image family skip image check
-	if b.config.AlicloudImageFamily != "" {
-		steps = append(steps,
-			&stepCheckAlicloudImageFamily{
-				ImageFamily: b.config.AlicloudImageFamily,
-			})
-	} else {
-		steps = append(steps,
-			&stepCheckAlicloudSourceImage{
-				SourceECSImageId: b.config.AlicloudSourceImage,
-			})
-	}
-	steps = append(steps,
+		&stepCheckAlicloudSourceImage{
+			SourceECSImageId: b.config.AlicloudSourceImage,
+		},
 		&stepConfigAlicloudKeyPair{
 			Debug:        b.config.PackerDebug,
 			Comm:         &b.config.Comm,
 			DebugKeyPath: fmt.Sprintf("ecs_%s.pem", b.config.PackerBuildName),
 			RegionId:     b.config.AlicloudRegion,
-		})
+		},
+	}
 	if b.chooseNetworkType() == InstanceNetworkVpc {
 		steps = append(steps,
 			&stepConfigAlicloudVPC{
@@ -152,8 +141,6 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			InternetMaxBandwidthOut: b.config.InternetMaxBandwidthOut,
 			InstanceName:            b.config.InstanceName,
 			ZoneId:                  b.config.ZoneId,
-			SecurityEnhancementStrategy: b.config.SecurityEnhancementStrategy,
-			AlicloudImageFamily:     b.config.AlicloudImageFamily,
 		})
 	if b.chooseNetworkType() == InstanceNetworkVpc {
 		steps = append(steps, &stepConfigAlicloudEIP{
