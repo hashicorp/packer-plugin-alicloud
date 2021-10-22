@@ -52,6 +52,9 @@ type RunConfig struct {
 	DisableStopInstance bool `mapstructure:"disable_stop_instance" required:"false"`
 	// Ram Role to apply when launching the instance.
 	RamRoleName string `mapstructure:"ram_role_name" required:"false"`
+	// Key/value pair tags to apply to the instance that is *launched*
+	// to create the image.
+	RunTags map[string]string `mapstructure:"run_tags" required:"false"`
 	// ID of the security group to which a newly
 	// created instance belongs. Mutual access is allowed between instances in one
 	// security group. If not specified, the newly created instance will be added
@@ -135,6 +138,10 @@ func (c *RunConfig) Prepare(ctx *interpolate.Context) []error {
 		c.Comm.SSHPrivateKeyFile == "" && c.Comm.SSHPassword == "" && c.Comm.WinRMPassword == "" {
 
 		c.Comm.SSHTemporaryKeyPairName = fmt.Sprintf("packer_%s", uuid.TimeOrderedUUID())
+	}
+
+	if c.RunTags == nil {
+		c.RunTags = make(map[string]string)
 	}
 
 	// Validation
