@@ -23,6 +23,7 @@ type stepCreateAlicloudInstance struct {
 	UserData                    string
 	UserDataFile                string
 	RamRoleName                 string
+	Tags                        map[string]string
 	RegionId                    string
 	InternetChargeType          string
 	InternetMaxBandwidthOut     int
@@ -118,6 +119,7 @@ func (s *stepCreateAlicloudInstance) buildCreateInstanceRequest(state multistep.
 	request.InstanceType = s.InstanceType
 	request.InstanceName = s.InstanceName
 	request.RamRoleName = s.RamRoleName
+	request.Tag = buildCreateInstanceTags(s.Tags)
 	request.ZoneId = s.ZoneId
 	request.SecurityEnhancementStrategy = s.SecurityEnhancementStrategy
 	if s.AlicloudImageFamily != "" {
@@ -211,4 +213,14 @@ func (s *stepCreateAlicloudInstance) getUserData(state multistep.StateBag) (stri
 
 	return userData, nil
 
+}
+
+func buildCreateInstanceTags(tags map[string]string) *[]ecs.CreateInstanceTag {
+	var ecsTags []ecs.CreateInstanceTag
+
+	for k, v := range tags {
+		ecsTags = append(ecsTags, ecs.CreateInstanceTag{Key: k, Value: v})
+	}
+
+	return &ecsTags
 }

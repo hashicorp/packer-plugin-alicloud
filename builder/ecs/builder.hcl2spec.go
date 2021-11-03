@@ -91,6 +91,7 @@ type FlatConfig struct {
 	ForceStopInstance                 *bool                    `mapstructure:"force_stop_instance" required:"false" cty:"force_stop_instance" hcl:"force_stop_instance"`
 	DisableStopInstance               *bool                    `mapstructure:"disable_stop_instance" required:"false" cty:"disable_stop_instance" hcl:"disable_stop_instance"`
 	RamRoleName                       *string                  `mapstructure:"ram_role_name" required:"false" cty:"ram_role_name" hcl:"ram_role_name"`
+	RunTags                           map[string]string        `mapstructure:"run_tags" required:"false" cty:"run_tags" hcl:"run_tags"`
 	SecurityGroupId                   *string                  `mapstructure:"security_group_id" required:"false" cty:"security_group_id" hcl:"security_group_id"`
 	SecurityGroupName                 *string                  `mapstructure:"security_group_name" required:"false" cty:"security_group_name" hcl:"security_group_name"`
 	SecurityEnhancementStrategy       *string                  `mapstructure:"security_enhancement_strategy" required:"false" cty:"security_enhancement_strategy" hcl:"security_enhancement_strategy"`
@@ -212,6 +213,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"force_stop_instance":           &hcldec.AttrSpec{Name: "force_stop_instance", Type: cty.Bool, Required: false},
 		"disable_stop_instance":         &hcldec.AttrSpec{Name: "disable_stop_instance", Type: cty.Bool, Required: false},
 		"ram_role_name":                 &hcldec.AttrSpec{Name: "ram_role_name", Type: cty.String, Required: false},
+		"run_tags":                      &hcldec.AttrSpec{Name: "run_tags", Type: cty.Map(cty.String), Required: false},
 		"security_group_id":             &hcldec.AttrSpec{Name: "security_group_id", Type: cty.String, Required: false},
 		"security_group_name":           &hcldec.AttrSpec{Name: "security_group_name", Type: cty.String, Required: false},
 		"security_enhancement_strategy": &hcldec.AttrSpec{Name: "security_enhancement_strategy", Type: cty.String, Required: false},

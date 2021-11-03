@@ -77,6 +77,10 @@ Here is a basic example for Alicloud.
       "io_optimized": "true",
       "internet_charge_type": "PayByTraffic",
       "image_force_delete": "true"
+      "run_tags": {
+        "Managed by": "Packer",
+        "Built by": "Packer"
+      }
     }
   ],
   "provisioners": [
@@ -111,6 +115,10 @@ source "alicloud-ecs" "basic-example" {
       io_optimized = true
       internet_charge_type = "PayByTraffic"
       image_force_delete = true
+      run_tags  = {
+        "Built by"   = "Packer"
+        "Managed by" = "Packer"
+      }
 }
 
 build {

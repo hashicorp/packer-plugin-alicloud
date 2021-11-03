@@ -147,6 +147,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			UserData:                    b.config.UserData,
 			UserDataFile:                b.config.UserDataFile,
 			RamRoleName:                 b.config.RamRoleName,
+			Tags:                        b.config.RunTags,
 			RegionId:                    b.config.AlicloudRegion,
 			InternetChargeType:          b.config.InternetChargeType,
 			InternetMaxBandwidthOut:     b.config.InternetMaxBandwidthOut,
