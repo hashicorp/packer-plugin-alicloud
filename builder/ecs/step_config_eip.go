@@ -31,59 +31,63 @@ func (s *stepConfigAlicloudEIP) Run(ctx context.Context, state multistep.StateBa
 	ui := state.Get("ui").(packersdk.Ui)
 	instance := state.Get("instance").(*ecs.Instance)
 
+	var ipaddress string
+
+	if s.AssociatePublicIpAddress {
+		ui.Say("Allocating eip...")
+
+		allocateEipAddressRequest := s.buildAllocateEipAddressRequest(state)
+		allocateEipAddressResponse, err := client.WaitForExpected(&WaitForExpectArgs{
+			RequestFunc: func() (responses.AcsResponse, error) {
+				return client.AllocateEipAddress(allocateEipAddressRequest)
+			},
+			EvalFunc: client.EvalCouldRetryResponse(allocateEipAddressRetryErrors, EvalRetryErrorType),
+		})
+
+		if err != nil {
+			return halt(state, err, "Error allocating eip")
+		}
+
+		ipaddress = allocateEipAddressResponse.(*ecs.AllocateEipAddressResponse).EipAddress
+		ui.Message(fmt.Sprintf("Allocated eip: %s", ipaddress))
+
+		allocateId := allocateEipAddressResponse.(*ecs.AllocateEipAddressResponse).AllocationId
+		s.allocatedId = allocateId
+
+		err = s.waitForEipStatus(client, instance.RegionId, s.allocatedId, EipStatusAvailable)
+		if err != nil {
+			return halt(state, err, "Error wait eip available timeout")
+		}
+
+		associateEipAddressRequest := ecs.CreateAssociateEipAddressRequest()
+		associateEipAddressRequest.AllocationId = allocateId
+		associateEipAddressRequest.InstanceId = instance.InstanceId
+		if _, err := client.AssociateEipAddress(associateEipAddressRequest); err != nil {
+			e, ok := err.(errors.Error)
+			if !ok || e.ErrorCode() != "TaskConflict" {
+				return halt(state, err, "Error associating eip")
+			}
+
+			ui.Error(fmt.Sprintf("Error associate eip: %s", err))
+		}
+
+		err = s.waitForEipStatus(client, instance.RegionId, s.allocatedId, EipStatusInUse)
+		if err != nil {
+			return halt(state, err, "Error wait eip associated timeout")
+		}
+	}
+
 	if s.SSHPrivateIp {
-		ipaddress := instance.VpcAttributes.PrivateIpAddress.IpAddress
+		ipaddresses := instance.VpcAttributes.PrivateIpAddress.IpAddress
 		if len(ipaddress) == 0 {
 			ui.Say("Failed to get private ip of instance")
 			return multistep.ActionHalt
 		}
-		state.Put("ipaddress", ipaddress[0])
-		return multistep.ActionContinue
-	}
-
-	ui.Say("Allocating eip...")
-
-	allocateEipAddressRequest := s.buildAllocateEipAddressRequest(state)
-	allocateEipAddressResponse, err := client.WaitForExpected(&WaitForExpectArgs{
-		RequestFunc: func() (responses.AcsResponse, error) {
-			return client.AllocateEipAddress(allocateEipAddressRequest)
-		},
-		EvalFunc: client.EvalCouldRetryResponse(allocateEipAddressRetryErrors, EvalRetryErrorType),
-	})
-
-	if err != nil {
-		return halt(state, err, "Error allocating eip")
-	}
-
-	ipaddress := allocateEipAddressResponse.(*ecs.AllocateEipAddressResponse).EipAddress
-	ui.Message(fmt.Sprintf("Allocated eip: %s", ipaddress))
-
-	allocateId := allocateEipAddressResponse.(*ecs.AllocateEipAddressResponse).AllocationId
-	s.allocatedId = allocateId
-
-	err = s.waitForEipStatus(client, instance.RegionId, s.allocatedId, EipStatusAvailable)
-	if err != nil {
-		return halt(state, err, "Error wait eip available timeout")
-	}
-
-	associateEipAddressRequest := ecs.CreateAssociateEipAddressRequest()
-	associateEipAddressRequest.AllocationId = allocateId
-	associateEipAddressRequest.InstanceId = instance.InstanceId
-	if _, err := client.AssociateEipAddress(associateEipAddressRequest); err != nil {
-		e, ok := err.(errors.Error)
-		if !ok || e.ErrorCode() != "TaskConflict" {
-			return halt(state, err, "Error associating eip")
-		}
-
-		ui.Error(fmt.Sprintf("Error associate eip: %s", err))
-	}
-
-	err = s.waitForEipStatus(client, instance.RegionId, s.allocatedId, EipStatusInUse)
-	if err != nil {
-		return halt(state, err, "Error wait eip associated timeout")
+		ipaddress = ipaddresses[0]
 	}
 
 	state.Put("ipaddress", ipaddress)
+
 	return multistep.ActionContinue
 }
 
