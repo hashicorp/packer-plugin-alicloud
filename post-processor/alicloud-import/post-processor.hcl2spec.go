@@ -23,6 +23,7 @@ type FlatConfig struct {
 	AlicloudAccessKey                 *string                      `mapstructure:"access_key" required:"true" cty:"access_key" hcl:"access_key"`
 	AlicloudSecretKey                 *string                      `mapstructure:"secret_key" required:"true" cty:"secret_key" hcl:"secret_key"`
 	AlicloudRegion                    *string                      `mapstructure:"region" required:"true" cty:"region" hcl:"region"`
+	AlicloudRamRole                   *string                      `mapstructure:"ram_role_name" required:"true" cty:"ram_role_name" hcl:"ram_role_name"`
 	AlicloudSkipValidation            *bool                        `mapstructure:"skip_region_validation" required:"false" cty:"skip_region_validation" hcl:"skip_region_validation"`
 	AlicloudSkipImageValidation       *bool                        `mapstructure:"skip_image_validation" required:"false" cty:"skip_image_validation" hcl:"skip_image_validation"`
 	AlicloudProfile                   *string                      `mapstructure:"profile" required:"false" cty:"profile" hcl:"profile"`
@@ -54,7 +55,6 @@ type FlatConfig struct {
 	AlicloudImageFamily               *string                      `mapstructure:"image_family" required:"true" cty:"image_family" hcl:"image_family"`
 	ForceStopInstance                 *bool                        `mapstructure:"force_stop_instance" required:"false" cty:"force_stop_instance" hcl:"force_stop_instance"`
 	DisableStopInstance               *bool                        `mapstructure:"disable_stop_instance" required:"false" cty:"disable_stop_instance" hcl:"disable_stop_instance"`
-	RamRoleName                       *string                      `mapstructure:"ram_role_name" required:"false" cty:"ram_role_name" hcl:"ram_role_name"`
 	RunTags                           map[string]string            `mapstructure:"run_tags" required:"false" cty:"run_tags" hcl:"run_tags"`
 	SecurityGroupId                   *string                      `mapstructure:"security_group_id" required:"false" cty:"security_group_id" hcl:"security_group_id"`
 	SecurityGroupName                 *string                      `mapstructure:"security_group_name" required:"false" cty:"security_group_name" hcl:"security_group_name"`
@@ -153,6 +153,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"access_key":                    &hcldec.AttrSpec{Name: "access_key", Type: cty.String, Required: false},
 		"secret_key":                    &hcldec.AttrSpec{Name: "secret_key", Type: cty.String, Required: false},
 		"region":                        &hcldec.AttrSpec{Name: "region", Type: cty.String, Required: false},
+		"ram_role_name":                 &hcldec.AttrSpec{Name: "ram_role_name", Type: cty.String, Required: false},
 		"skip_region_validation":        &hcldec.AttrSpec{Name: "skip_region_validation", Type: cty.Bool, Required: false},
 		"skip_image_validation":         &hcldec.AttrSpec{Name: "skip_image_validation", Type: cty.Bool, Required: false},
 		"profile":                       &hcldec.AttrSpec{Name: "profile", Type: cty.String, Required: false},
@@ -184,7 +185,6 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"image_family":                  &hcldec.AttrSpec{Name: "image_family", Type: cty.String, Required: false},
 		"force_stop_instance":           &hcldec.AttrSpec{Name: "force_stop_instance", Type: cty.Bool, Required: false},
 		"disable_stop_instance":         &hcldec.AttrSpec{Name: "disable_stop_instance", Type: cty.Bool, Required: false},
-		"ram_role_name":                 &hcldec.AttrSpec{Name: "ram_role_name", Type: cty.String, Required: false},
 		"run_tags":                      &hcldec.AttrSpec{Name: "run_tags", Type: cty.Map(cty.String), Required: false},
 		"security_group_id":             &hcldec.AttrSpec{Name: "security_group_id", Type: cty.String, Required: false},
 		"security_group_name":           &hcldec.AttrSpec{Name: "security_group_name", Type: cty.String, Required: false},
