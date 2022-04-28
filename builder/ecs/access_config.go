@@ -28,6 +28,10 @@ type AlicloudAccessConfig struct {
 	// Alicloud region must be provided unless `profile` is set, but it can
 	// also be sourced from the `ALICLOUD_REGION` environment variable.
 	AlicloudRegion string `mapstructure:"region" required:"true"`
+	// Alicloud RamRole must be provided for EcsRamRole mode
+	AlicloudRamRole string `mapstructure:"ram_role_name" required:"false"`
+	// Alicloud authentication mode must be provided
+	AlicloudAuthMode string `mapstructure:"mode" required:"true"`
 	// The region validation can be skipped if this value is true, the default
 	// value is false.
 	AlicloudSkipValidation bool `mapstructure:"skip_region_validation" required:"false"`
@@ -55,6 +59,8 @@ const DefaultRequestReadTimeout = 10 * time.Second
 
 // Client for AlicloudClient
 func (c *AlicloudAccessConfig) Client() (*ClientWrapper, error) {
+	var client *ecs.Client
+	var err error
 	if c.client != nil {
 		return c.client, nil
 	}
@@ -70,18 +76,25 @@ func (c *AlicloudAccessConfig) Client() (*ClientWrapper, error) {
 		return str
 	}
 
-	if c.AlicloudAccessKey == "" || c.AlicloudSecretKey == "" {
-		c.AlicloudAccessKey = getProviderConfig(c.AlicloudAccessKey, "access_key_id")
-		c.AlicloudSecretKey = getProviderConfig(c.AlicloudSecretKey, "access_key_secret")
-		c.AlicloudRegion = getProviderConfig(c.AlicloudRegion, "region_id")
-		c.SecurityToken = getProviderConfig(c.SecurityToken, "sts_token")
-		c.CustomEndpointEcs = getProviderConfig(c.CustomEndpointEcs, "endpoint")
-	}
+	c.AlicloudRegion = getProviderConfig(c.AlicloudRegion, "region_id")
+	c.SecurityToken = getProviderConfig(c.SecurityToken, "sts_token")
+	c.CustomEndpointEcs = getProviderConfig(c.CustomEndpointEcs, "endpoint")
+
 	if c.CustomEndpointEcs != "" && c.AlicloudRegion != "" {
 		_ = endpoints.AddEndpointMapping(c.AlicloudRegion, "Ecs", c.CustomEndpointEcs)
 	}
 
-	client, err := ecs.NewClientWithStsToken(c.AlicloudRegion, c.AlicloudAccessKey, c.AlicloudSecretKey, c.SecurityToken)
+	if getProviderConfig(c.AlicloudAuthMode, "mode") == "EcsRamRole" {
+		c.AlicloudRamRole = getProviderConfig(c.AlicloudRamRole, "ram_role_name")
+		client, err = ecs.NewClientWithEcsRamRole(c.AlicloudRegion, c.AlicloudRamRole)
+	} else {
+		if c.AlicloudAccessKey == "" || c.AlicloudSecretKey == "" {
+			c.AlicloudAccessKey = getProviderConfig(c.AlicloudAccessKey, "access_key_id")
+			c.AlicloudSecretKey = getProviderConfig(c.AlicloudSecretKey, "access_key_secret")
+		}
+		client, err = ecs.NewClientWithStsToken(c.AlicloudRegion, c.AlicloudAccessKey, c.AlicloudSecretKey, c.SecurityToken)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -209,6 +222,8 @@ func getConfigFromProfile(c *AlicloudAccessConfig, ProfileKey string) (interface
 		return v, nil
 	}
 	switch ProfileKey {
+	case "mode":
+		return mode, nil
 	case "access_key_id", "access_key_secret":
 		if mode == "EcsRamRole" {
 			return "", nil
