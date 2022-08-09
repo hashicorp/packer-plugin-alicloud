@@ -69,6 +69,7 @@ type FlatConfig struct {
 	AlicloudImageName                 *string                  `mapstructure:"image_name" required:"true" cty:"image_name" hcl:"image_name"`
 	AlicloudImageVersion              *string                  `mapstructure:"image_version" required:"false" cty:"image_version" hcl:"image_version"`
 	AlicloudImageDescription          *string                  `mapstructure:"image_description" required:"false" cty:"image_description" hcl:"image_description"`
+	AlicloudResourceGroupId           *string                  `mapstructure:"resource_group_id" required:"false" cty:"resource_group_id" hcl:"resource_group_id"`
 	AlicloudImageShareAccounts        []string                 `mapstructure:"image_share_account" required:"false" cty:"image_share_account" hcl:"image_share_account"`
 	AlicloudImageUNShareAccounts      []string                 `mapstructure:"image_unshare_account" cty:"image_unshare_account" hcl:"image_unshare_account"`
 	AlicloudImageDestinationRegions   []string                 `mapstructure:"image_copy_regions" required:"false" cty:"image_copy_regions" hcl:"image_copy_regions"`
@@ -192,6 +193,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"image_name":                       &hcldec.AttrSpec{Name: "image_name", Type: cty.String, Required: false},
 		"image_version":                    &hcldec.AttrSpec{Name: "image_version", Type: cty.String, Required: false},
 		"image_description":                &hcldec.AttrSpec{Name: "image_description", Type: cty.String, Required: false},
+		"resource_group_id":                &hcldec.AttrSpec{Name: "resource_group_id", Type: cty.String, Required: false},
 		"image_share_account":              &hcldec.AttrSpec{Name: "image_share_account", Type: cty.List(cty.String), Required: false},
 		"image_unshare_account":            &hcldec.AttrSpec{Name: "image_unshare_account", Type: cty.List(cty.String), Required: false},
 		"image_copy_regions":               &hcldec.AttrSpec{Name: "image_copy_regions", Type: cty.List(cty.String), Required: false},

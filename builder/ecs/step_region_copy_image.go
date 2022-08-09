@@ -54,6 +54,7 @@ func (s *stepRegionCopyAlicloudImage) Run(ctx context.Context, state multistep.S
 		copyImageRequest.ImageId = srcImageId
 		copyImageRequest.DestinationRegionId = destinationRegion
 		copyImageRequest.DestinationImageName = ecsImageName
+		copyImageRequest.ResourceGroupId = config.AlicloudResourceGroupId
 		if config.ImageEncrypted != confighelper.TriUnset {
 			copyImageRequest.Encrypted = requests.NewBoolean(config.ImageEncrypted.True())
 		}
