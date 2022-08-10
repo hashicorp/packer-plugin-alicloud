@@ -125,6 +125,10 @@ type RunConfig struct {
 	// to 0. For those disks containing lots of data, it may require a higher
 	// timeout value.
 	WaitSnapshotReadyTimeout int `mapstructure:"wait_snapshot_ready_timeout" required:"false"`
+	// Timeout of copying image.
+	// The default timeout is 3600 seconds if this option is not set or is set
+	// to 0.
+	WaitCopyingImageReadyTimeout int `mapstructure:"wait_copying_image_ready_timeout" required:"false"`
 	// Communicator settings
 	Comm communicator.Config `mapstructure:",squash"`
 	// If this value is true, packer will connect to

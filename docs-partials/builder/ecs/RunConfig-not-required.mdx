@@ -99,6 +99,10 @@
   to 0. For those disks containing lots of data, it may require a higher
   timeout value.
 
+- `wait_copying_image_ready_timeout` (int) - Timeout of copying image.
+  The default timeout is 3600 seconds if this option is not set or is set
+  to 0.
+
 - `ssh_private_ip` (bool) - If this value is true, packer will connect to
   the ECS created through private ip instead of allocating a public ip or an
   EIP. The default value is false.
