@@ -16,6 +16,7 @@ type stepRegionCopyAlicloudImage struct {
 	AlicloudImageDestinationRegions []string
 	AlicloudImageDestinationNames   []string
 	RegionId                        string
+	WaitCopyingImageReadyTimeout    int
 }
 
 func (s *stepRegionCopyAlicloudImage) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
@@ -67,7 +68,7 @@ func (s *stepRegionCopyAlicloudImage) Run(ctx context.Context, state multistep.S
 	}
 
 	if config.ImageEncrypted != confighelper.TriUnset {
-		if _, err := client.WaitForImageStatus(s.RegionId, alicloudImages[s.RegionId], ImageStatusAvailable, time.Duration(ALICLOUD_DEFAULT_LONG_TIMEOUT)*time.Second); err != nil {
+		if _, err := client.WaitForImageStatus(s.RegionId, alicloudImages[s.RegionId], ImageStatusAvailable, time.Duration(s.WaitCopyingImageReadyTimeout)*time.Second); err != nil {
 			return halt(state, err, fmt.Sprintf("Timeout waiting image %s finish copying", alicloudImages[s.RegionId]))
 		}
 	}

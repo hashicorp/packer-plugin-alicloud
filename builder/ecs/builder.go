@@ -214,6 +214,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			AlicloudImageDestinationRegions: b.config.AlicloudImageDestinationRegions,
 			AlicloudImageDestinationNames:   b.config.AlicloudImageDestinationNames,
 			RegionId:                        b.config.AlicloudRegion,
+			WaitCopyingImageReadyTimeout:    b.getCopyingImageReadyTimeout(),
 		},
 		&stepShareAlicloudImage{
 			AlicloudImageShareAccounts:   b.config.AlicloudImageShareAccounts,
@@ -278,6 +279,14 @@ func (b *Builder) isKeyPairNeeded() bool {
 func (b *Builder) getSnapshotReadyTimeout() int {
 	if b.config.WaitSnapshotReadyTimeout > 0 {
 		return b.config.WaitSnapshotReadyTimeout
+	}
+
+	return ALICLOUD_DEFAULT_LONG_TIMEOUT
+}
+
+func (b *Builder) getCopyingImageReadyTimeout() int {
+	if b.config.WaitCopyingImageReadyTimeout > 0 {
+		return b.config.WaitCopyingImageReadyTimeout
 	}
 
 	return ALICLOUD_DEFAULT_LONG_TIMEOUT
