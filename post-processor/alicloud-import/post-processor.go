@@ -78,6 +78,7 @@ type Config struct {
 	// characters. Leaving it blank means null, which is the default value. It
 	// cannot begin with `http://` or `https://`.
 	AlicloudImageDescription        string   `mapstructure:"image_description"`
+	AlicloudResourceGroupId         string   `mapstructure:"resource_group_id"`
 	AlicloudImageShareAccounts      []string `mapstructure:"image_share_account"`
 	AlicloudImageDestinationRegions []string `mapstructure:"image_copy_regions"`
 	// Type of the OS, like linux/windows
@@ -467,7 +468,7 @@ func (p *PostProcessor) buildImportImageRequest() *ecs.ImportImageRequest {
 			OSSObject:     p.config.OSSKey,
 		},
 	}
-
+	request.ResourceGroupId = p.config.AlicloudResourceGroupId
 	return request
 }
 

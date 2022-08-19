@@ -108,6 +108,9 @@ type AlicloudImageConfig struct {
 	// characters. Leaving it blank means null, which is the default value. It
 	// cannot begin with `http://` or `https://`.
 	AlicloudImageDescription string `mapstructure:"image_description" required:"false"`
+	// The ID of the resource group to which to assign the custom image.
+	// If you do not specify this parameter, the image is assigned to the default resource group.
+	AlicloudResourceGroupId string `mapstructure:"resource_group_id" required:"false"`
 	// The IDs of to-be-added Aliyun accounts to which the image is shared. The
 	// number of accounts is 1 to 10. If number of accounts is greater than 10,
 	// this parameter is ignored.
