@@ -5,16 +5,10 @@ go 1.17
 require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1028
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.8+incompatible
-	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/hashicorp/hcl/v2 v2.13.0
 	github.com/hashicorp/packer-plugin-sdk v0.3.1
-	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/modern-go/reflect2 v1.0.1 // indirect
-	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/zclconf/go-cty v1.10.0
-	gopkg.in/ini.v1 v1.62.0 // indirect
 )
 
 require (
@@ -26,6 +20,7 @@ require (
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/armon/go-metrics v0.3.9 // indirect
 	github.com/aws/aws-sdk-go v1.40.34 // indirect
+	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/dylanmei/iso8601 v0.1.0 // indirect
@@ -38,6 +33,7 @@ require (
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.1.0 // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/hashicorp/consul/api v1.10.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
@@ -60,6 +56,7 @@ require (
 	github.com/hashicorp/yamux v0.0.0-20210826001029-26ff87cf9493 // indirect
 	github.com/jehiah/go-strftime v0.0.0-20171201141054-1d33003b3869 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/masterzen/simplexml v0.0.0-20190410153822-31eea3082786 // indirect
 	github.com/masterzen/winrm v0.0.0-20210623064412-3b76017826b0 // indirect
@@ -72,11 +69,13 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/mitchellh/reflectwalk v1.0.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/sftp v1.13.2 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
+	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	go.opencensus.io v0.23.0 // indirect
@@ -92,5 +91,7 @@ require (
 	google.golang.org/genproto v0.0.0-20210831024726-fe130286e0e2 // indirect
 	google.golang.org/grpc v1.40.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
+	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
+	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
