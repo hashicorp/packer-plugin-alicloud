@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.13.0
 	github.com/hashicorp/packer-plugin-sdk v0.3.1
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/zclconf/go-cty v1.10.0
+	github.com/zclconf/go-cty v1.11.1
 )
 
 require (
