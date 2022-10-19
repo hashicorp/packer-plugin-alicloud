@@ -86,27 +86,28 @@ func (c *AlicloudAccessConfig) Client() (*ClientWrapper, error) {
 		_ = endpoints.AddEndpointMapping(c.AlicloudRegion, "Ecs", c.CustomEndpointEcs)
 	}
 
-	c.AlicloudRamRoleArn = getProviderConfig(c.AlicloudRamRole, "ram_role_arn")
-	c.AlicloudRamSessionName = getProviderConfig(c.AlicloudRamSessionName, "ram_session_name")
+	if c.AlicloudAccessKey == "" || c.AlicloudSecretKey == "" {
+		c.AlicloudAccessKey = getProviderConfig(c.AlicloudAccessKey, "access_key_id")
+		c.AlicloudSecretKey = getProviderConfig(c.AlicloudSecretKey, "access_key_secret")
+	}
+
+	if c.AlicloudRamRoleArn == "" || c.AlicloudRamSessionName == "" {
+		c.AlicloudRamRoleArn = getProviderConfig(c.AlicloudRamRole, "ram_role_arn")
+		c.AlicloudRamSessionName = getProviderConfig(c.AlicloudRamSessionName, "ram_session_name")
+	}
+
+	if c.AlicloudRamRole == "" {
+		c.AlicloudRamRole = getProviderConfig(c.AlicloudRamRole, "ram_role_name")
+	}
 
 	if c.AlicloudRamRoleArn != "" && c.AlicloudRamSessionName != "" {
 		client, err = ecs.NewClientWithRamRoleArn(
 			c.AlicloudRegion, c.AlicloudAccessKey,
 			c.AlicloudSecretKey, c.AlicloudRamRoleArn, c.AlicloudRamSessionName)
+	} else if c.AlicloudRamRole != "" {
+		client, err = ecs.NewClientWithEcsRamRole(c.AlicloudRegion, c.AlicloudRamRole)
 	} else {
-		if c.AlicloudRamRole == "" {
-			c.AlicloudRamRole = getProviderConfig(c.AlicloudRamRole, "ram_role_name")
-		}
-
-		if c.AlicloudRamRole != "" {
-			client, err = ecs.NewClientWithEcsRamRole(c.AlicloudRegion, c.AlicloudRamRole)
-		} else {
-			if c.AlicloudAccessKey == "" || c.AlicloudSecretKey == "" {
-				c.AlicloudAccessKey = getProviderConfig(c.AlicloudAccessKey, "access_key_id")
-				c.AlicloudSecretKey = getProviderConfig(c.AlicloudSecretKey, "access_key_secret")
-			}
-			client, err = ecs.NewClientWithStsToken(c.AlicloudRegion, c.AlicloudAccessKey, c.AlicloudSecretKey, c.SecurityToken)
-		}
+		client, err = ecs.NewClientWithStsToken(c.AlicloudRegion, c.AlicloudAccessKey, c.AlicloudSecretKey, c.SecurityToken)
 	}
 
 	if err != nil {
