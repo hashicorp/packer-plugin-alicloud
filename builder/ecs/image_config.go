@@ -135,12 +135,12 @@ type AlicloudImageConfig struct {
 	// images and then create the target images, otherwise, the creation will
 	// fail. The default value is false. Check `image_name` and
 	// `image_copy_names` options for names of target images. If
-	// [-force](/docs/commands/build#force) option is provided in `build`
+	// [-force](/packer/docs/commands/build#force) option is provided in `build`
 	// command, this option can be omitted and taken as true.
 	AlicloudImageForceDelete bool `mapstructure:"image_force_delete" required:"false"`
 	// If this value is true, when delete the duplicated existing images, the
 	// source snapshots of those images will be delete either. If
-	// [-force](/docs/commands/build#force) option is provided in `build`
+	// [-force](/packer/docs/commands/build#force) option is provided in `build`
 	// command, this option can be omitted and taken as true.
 	AlicloudImageForceDeleteSnapshots bool `mapstructure:"image_force_delete_snapshots" required:"false"`
 	AlicloudImageForceDeleteInstances bool `mapstructure:"image_force_delete_instances"`
@@ -157,7 +157,7 @@ type AlicloudImageConfig struct {
 	AlicloudImageTags map[string]string `mapstructure:"tags" required:"false"`
 	// Same as [`tags`](#tags) but defined as a singular repeatable block
 	// containing a `key` and a `value` field. In HCL2 mode the
-	// [`dynamic_block`](/docs/templates/hcl_templates/expressions#dynamic-blocks)
+	// [`dynamic_block`](/packer/docs/templates/hcl_templates/expressions#dynamic-blocks)
 	// will allow you to create those programatically.
 	AlicloudImageTag    config.KeyValues `mapstructure:"tag" required:"false"`
 	AlicloudDiskDevices `mapstructure:",squash"`
