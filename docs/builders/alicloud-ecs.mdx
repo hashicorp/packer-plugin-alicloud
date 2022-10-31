@@ -47,6 +47,75 @@ builder.
 
 @include 'packer-plugin-sdk/communicator/SSH-Agent-Auth-not-required.mdx'
 
+### Alicloud RAM permission:
+
+Finally the plugin should gain a set of Alicloud RAM permission to call Alicloud API.
+
+The following policy document provides the minimal set permissions necessary for the Alicloud plugin to work:
+
+```json
+{
+  "Version": "1",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ecs:AttachKeyPair",
+        "ecs:CreateKeyPair",
+        "ecs:DeleteKeyPairs",
+        "ecs:DetachKeyPair",
+        "ecs:DescribeKeyPairs",
+        "ecs:DescribeDisks",
+        "ecs:ImportKeyPair",
+        "ecs:CreateSecurityGroup",
+        "ecs:AuthorizeSecurityGroup",
+        "ecs:AuthorizeSecurityGroupEgress",
+        "ecs:DescribeSecurityGroups",
+        "ecs:DeleteSecurityGroup",
+        "ecs:CopyImage",
+        "ecs:CancelCopyImage",
+        "ecs:CreateImage",
+        "ecs:DescribeImages",
+        "ecs:DescribeImageFromFamily",
+        "ecs:DeleteImage",
+        "ecs:ModifyImageAttribute",
+        "ecs:DescribeImageSharePermission",
+        "ecs:ModifyImageSharePermission",
+        "ecs:DescribeInstances",
+        "ecs:StartInstance",
+        "ecs:StopInstance",
+        "ecs:CreateInstance",
+        "ecs:DeleteInstance",
+        "ecs:RunInstances",
+        "ecs:RebootInstance",
+        "ecs:RenewInstance",
+        "ecs:CreateSnapshot",
+        "ecs:DeleteSnapshot",
+        "ecs:DescribeSnapshots",
+        "ecs:TagResources",
+        "ecs:UntagResources",
+        "ecs:AllocatePublicIpAddress",
+        "ecs:AddTags",
+        "vpc:DescribeVpcs",
+        "vpc:CreateVpc",
+        "vpc:DeleteVpc",
+        "vpc:DescribeVSwitches",
+        "vpc:CreateVSwitch",
+        "vpc:DeleteVSwitch",
+        "vpc:AllocateEipAddress",
+        "vpc:AssociateEipAddress",
+        "vpc:UnassociateEipAddress",
+        "vpc:ReleaseEipAddress",
+        "vpc:DescribeEipAddresses"
+      ],
+      "Resource": [
+        "*"
+      ]
+    }
+  ]
+}
+```
+
 # Disk Devices Configuration:
 
 @include 'builder/ecs/AlicloudDiskDevice-not-required.mdx'
