@@ -32,7 +32,7 @@ type AlicloudAccessConfig struct {
 	AlicloudRamRole string `mapstructure:"ram_role_name" required:"true"`
 	// Alicloud RamRoleArn must be provided for RamRoleArn mode unless `profile` is set.
 	AlicloudRamRoleArn string `mapstructure:"ram_role_arn" required:"true"`
-	// Alicloud RamRoleArn must be provided for RamRoleArn mode unless `profile` is set.
+	// Alicloud RamSessionName must be provided for RamRoleArn mode unless `profile` is set.
 	AlicloudRamSessionName string `mapstructure:"ram_session_name" required:"true"`
 	// The region validation can be skipped if this value is true, the default
 	// value is false.
