@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/packer-plugin-sdk/uuid"
 
@@ -31,6 +32,7 @@ type stepCreateAlicloudInstance struct {
 	ZoneId                      string
 	SecurityEnhancementStrategy string
 	AlicloudImageFamily         string
+	DryRun                      bool
 	instance                    *ecs.Instance
 }
 
@@ -60,6 +62,12 @@ func (s *stepCreateAlicloudInstance) Run(ctx context.Context, state multistep.St
 	})
 
 	if err != nil {
+		errorMessage := fmt.Sprintf("{%s", err.Error())
+		if strings.Contains(errorMessage, RryRunException) {
+			ui.Say("Stop creating image because of dry run")
+			return multistep.ActionHalt
+		}
+
 		return halt(state, err, "Error creating instance")
 	}
 
@@ -127,6 +135,9 @@ func (s *stepCreateAlicloudInstance) buildCreateInstanceRequest(state multistep.
 	} else {
 		sourceImage := state.Get("source_image").(*ecs.Image)
 		request.ImageId = sourceImage.ImageId
+	}
+	if s.DryRun {
+		request.DryRun = requests.NewBoolean(s.DryRun)
 	}
 	securityGroupId := state.Get("securitygroupid").(string)
 	request.SecurityGroupId = securityGroupId

@@ -55,6 +55,13 @@ type RunConfig struct {
 	// Key/value pair tags to apply to the instance that is *launched*
 	// to create the image.
 	RunTags map[string]string `mapstructure:"run_tags" required:"false"`
+	//Specifies whether to check the validity of the request without actually
+	//making the request. Default value: false.
+	//true: The validity of the request is checked but the request is not made.
+	//If the check fails, the corresponding error code is returned. If the check succeeds,
+	//the DryRunOperation error code is returned.
+	//false: The validity of the request is checked, and the request is made if the check succeeds.
+	DryRun bool `mapstructure:"dry_run" required:"false"`
 	// ID of the security group to which a newly
 	// created instance belongs. Mutual access is allowed between instances in one
 	// security group. If not specified, the newly created instance will be added

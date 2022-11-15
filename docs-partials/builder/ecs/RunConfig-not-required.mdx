@@ -29,6 +29,9 @@
 - `run_tags` (map[string]string) - Key/value pair tags to apply to the instance that is *launched*
   to create the image.
 
+- `dry_run` (bool) - Specifies whether to check the validity of the request
+  without actually making the request. The default value: false
+
 - `security_group_id` (string) - ID of the security group to which a newly
   created instance belongs. Mutual access is allowed between instances in one
   security group. If not specified, the newly created instance will be added

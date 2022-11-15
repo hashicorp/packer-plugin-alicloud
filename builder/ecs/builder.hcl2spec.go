@@ -93,6 +93,7 @@ type FlatConfig struct {
 	ForceStopInstance                 *bool                    `mapstructure:"force_stop_instance" required:"false" cty:"force_stop_instance" hcl:"force_stop_instance"`
 	DisableStopInstance               *bool                    `mapstructure:"disable_stop_instance" required:"false" cty:"disable_stop_instance" hcl:"disable_stop_instance"`
 	RunTags                           map[string]string        `mapstructure:"run_tags" required:"false" cty:"run_tags" hcl:"run_tags"`
+	DryRun                            *bool                    `mapstructure:"dry_run" required:"false" cty:"dry_run" hcl:"dry_run"`
 	SecurityGroupId                   *string                  `mapstructure:"security_group_id" required:"false" cty:"security_group_id" hcl:"security_group_id"`
 	SecurityGroupName                 *string                  `mapstructure:"security_group_name" required:"false" cty:"security_group_name" hcl:"security_group_name"`
 	SecurityEnhancementStrategy       *string                  `mapstructure:"security_enhancement_strategy" required:"false" cty:"security_enhancement_strategy" hcl:"security_enhancement_strategy"`

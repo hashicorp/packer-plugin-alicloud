@@ -285,6 +285,10 @@ const (
 	EvalNotRetryErrorType = EvalErrorType(false)
 )
 
+const (
+	RryRunException = string("DryRunOperation")
+)
+
 func (c *ClientWrapper) EvalCouldRetryResponse(evalErrors []string, evalErrorType EvalErrorType) func(response responses.AcsResponse, err error) WaitForExpectEvalResult {
 	return func(response responses.AcsResponse, err error) WaitForExpectEvalResult {
 		if err == nil {

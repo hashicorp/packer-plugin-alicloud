@@ -155,6 +155,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			ZoneId:                      b.config.ZoneId,
 			SecurityEnhancementStrategy: b.config.SecurityEnhancementStrategy,
 			AlicloudImageFamily:         b.config.AlicloudImageFamily,
+			DryRun:                      b.config.DryRun,
 		})
 	if b.chooseNetworkType() == InstanceNetworkVpc {
 		steps = append(steps, &stepConfigAlicloudEIP{
