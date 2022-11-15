@@ -24,6 +24,8 @@ type FlatConfig struct {
 	AlicloudSecretKey                 *string                      `mapstructure:"secret_key" required:"true" cty:"secret_key" hcl:"secret_key"`
 	AlicloudRegion                    *string                      `mapstructure:"region" required:"true" cty:"region" hcl:"region"`
 	AlicloudRamRole                   *string                      `mapstructure:"ram_role_name" required:"true" cty:"ram_role_name" hcl:"ram_role_name"`
+	AlicloudRamRoleArn                *string                      `mapstructure:"ram_role_arn" required:"true" cty:"ram_role_arn" hcl:"ram_role_arn"`
+	AlicloudRamSessionName            *string                      `mapstructure:"ram_session_name" required:"true" cty:"ram_session_name" hcl:"ram_session_name"`
 	AlicloudSkipValidation            *bool                        `mapstructure:"skip_region_validation" required:"false" cty:"skip_region_validation" hcl:"skip_region_validation"`
 	AlicloudSkipImageValidation       *bool                        `mapstructure:"skip_image_validation" required:"false" cty:"skip_image_validation" hcl:"skip_image_validation"`
 	AlicloudProfile                   *string                      `mapstructure:"profile" required:"false" cty:"profile" hcl:"profile"`
@@ -156,6 +158,8 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"secret_key":                       &hcldec.AttrSpec{Name: "secret_key", Type: cty.String, Required: false},
 		"region":                           &hcldec.AttrSpec{Name: "region", Type: cty.String, Required: false},
 		"ram_role_name":                    &hcldec.AttrSpec{Name: "ram_role_name", Type: cty.String, Required: false},
+		"ram_role_arn":                     &hcldec.AttrSpec{Name: "ram_role_arn", Type: cty.String, Required: false},
+		"ram_session_name":                 &hcldec.AttrSpec{Name: "ram_session_name", Type: cty.String, Required: false},
 		"skip_region_validation":           &hcldec.AttrSpec{Name: "skip_region_validation", Type: cty.Bool, Required: false},
 		"skip_image_validation":            &hcldec.AttrSpec{Name: "skip_image_validation", Type: cty.Bool, Required: false},
 		"profile":                          &hcldec.AttrSpec{Name: "profile", Type: cty.String, Required: false},

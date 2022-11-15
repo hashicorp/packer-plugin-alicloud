@@ -30,6 +30,10 @@ type AlicloudAccessConfig struct {
 	AlicloudRegion string `mapstructure:"region" required:"true"`
 	// Alicloud RamRole must be provided for EcsRamRole mode unless `profile` is set.
 	AlicloudRamRole string `mapstructure:"ram_role_name" required:"true"`
+	// Alicloud RamRoleArn must be provided for RamRoleArn mode unless `profile` is set.
+	AlicloudRamRoleArn string `mapstructure:"ram_role_arn" required:"true"`
+	// Alicloud RamSessionName must be provided for RamRoleArn mode unless `profile` is set.
+	AlicloudRamSessionName string `mapstructure:"ram_session_name" required:"true"`
 	// The region validation can be skipped if this value is true, the default
 	// value is false.
 	AlicloudSkipValidation bool `mapstructure:"skip_region_validation" required:"false"`
@@ -85,13 +89,24 @@ func (c *AlicloudAccessConfig) Client() (*ClientWrapper, error) {
 	if c.AlicloudRamRole == "" {
 		c.AlicloudRamRole = getProviderConfig(c.AlicloudRamRole, "ram_role_name")
 	}
+
+	if c.AlicloudAccessKey == "" || c.AlicloudSecretKey == "" {
+		c.AlicloudAccessKey = getProviderConfig(c.AlicloudAccessKey, "access_key_id")
+		c.AlicloudSecretKey = getProviderConfig(c.AlicloudSecretKey, "access_key_secret")
+	}
+
+	if c.AlicloudRamRoleArn == "" || c.AlicloudRamSessionName == "" {
+		c.AlicloudRamRoleArn = getProviderConfig(c.AlicloudRamRole, "ram_role_arn")
+		c.AlicloudRamSessionName = getProviderConfig(c.AlicloudRamSessionName, "ram_session_name")
+	}
+
 	if c.AlicloudRamRole != "" {
 		client, err = ecs.NewClientWithEcsRamRole(c.AlicloudRegion, c.AlicloudRamRole)
+	} else if c.AlicloudRamRoleArn != "" && c.AlicloudRamSessionName != "" {
+		client, err = ecs.NewClientWithRamRoleArn(
+			c.AlicloudRegion, c.AlicloudAccessKey,
+			c.AlicloudSecretKey, c.AlicloudRamRoleArn, c.AlicloudRamSessionName)
 	} else {
-		if c.AlicloudAccessKey == "" || c.AlicloudSecretKey == "" {
-			c.AlicloudAccessKey = getProviderConfig(c.AlicloudAccessKey, "access_key_id")
-			c.AlicloudSecretKey = getProviderConfig(c.AlicloudSecretKey, "access_key_secret")
-		}
 		client, err = ecs.NewClientWithStsToken(c.AlicloudRegion, c.AlicloudAccessKey, c.AlicloudSecretKey, c.SecurityToken)
 	}
 
