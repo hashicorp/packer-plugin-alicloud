@@ -138,7 +138,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 	steps = append(steps,
 		&stepConfigAlicloudSecurityGroup{
 			SecurityGroupId:   b.config.SecurityGroupId,
-			SecurityGroupName: b.config.SecurityGroupId,
+			SecurityGroupName: b.config.SecurityGroupName,
 			RegionId:          b.config.AlicloudRegion,
 		},
 		&stepCreateAlicloudInstance{
