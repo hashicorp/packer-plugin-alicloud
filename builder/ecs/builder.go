@@ -202,6 +202,12 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 		})
 	}
 
+	if b.config.SkipCreateImage {
+		steps = append(steps, &stepStopBuilder{
+			StopReason: SkipCreateImage,
+		})
+	}
+
 	steps = append(steps,
 		&stepCreateAlicloudImage{
 			AlicloudImageIgnoreDataDisks: b.config.AlicloudImageIgnoreDataDisks,
