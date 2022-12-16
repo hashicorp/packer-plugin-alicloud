@@ -79,7 +79,7 @@ func (s *stepConfigAlicloudEIP) Run(ctx context.Context, state multistep.StateBa
 
 	if s.SSHPrivateIp {
 		ipaddresses := instance.VpcAttributes.PrivateIpAddress.IpAddress
-		if len(ipaddress) == 0 {
+		if len(ipaddresses) == 0 {
 			ui.Say("Failed to get private ip of instance")
 			return multistep.ActionHalt
 		}
