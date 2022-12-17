@@ -135,7 +135,7 @@ type RunConfig struct {
 	// the ECS created through private ip instead of allocating a public ip or an
 	// EIP. The default value is false.
 	SSHPrivateIp bool `mapstructure:"ssh_private_ip" required:"false"`
-	//If this value is true, packer will skip create image
+	//If true, Packer will not create a final image. Defaults to `false`.
 	SkipCreateImage bool `mapstructure:"skip_create_image" required:"false"`
 }
 

@@ -202,32 +202,27 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 		})
 	}
 
-	if b.config.SkipCreateImage {
-		steps = append(steps, &stepStopBuilder{
-			Message: SkipCreateImage,
-		})
+	if !b.config.SkipCreateImage {
+		steps = append(steps,
+			&stepCreateAlicloudImage{
+				AlicloudImageIgnoreDataDisks: b.config.AlicloudImageIgnoreDataDisks,
+				WaitSnapshotReadyTimeout:     b.getSnapshotReadyTimeout(),
+			},
+			&stepCreateTags{
+				Tags: b.config.AlicloudImageTags,
+			},
+			&stepRegionCopyAlicloudImage{
+				AlicloudImageDestinationRegions: b.config.AlicloudImageDestinationRegions,
+				AlicloudImageDestinationNames:   b.config.AlicloudImageDestinationNames,
+				RegionId:                        b.config.AlicloudRegion,
+				WaitCopyingImageReadyTimeout:    b.getCopyingImageReadyTimeout(),
+			},
+			&stepShareAlicloudImage{
+				AlicloudImageShareAccounts:   b.config.AlicloudImageShareAccounts,
+				AlicloudImageUNShareAccounts: b.config.AlicloudImageUNShareAccounts,
+				RegionId:                     b.config.AlicloudRegion,
+			})
 	}
-
-	steps = append(steps,
-		&stepCreateAlicloudImage{
-			AlicloudImageIgnoreDataDisks: b.config.AlicloudImageIgnoreDataDisks,
-			WaitSnapshotReadyTimeout:     b.getSnapshotReadyTimeout(),
-		},
-		&stepCreateTags{
-			Tags: b.config.AlicloudImageTags,
-		},
-		&stepRegionCopyAlicloudImage{
-			AlicloudImageDestinationRegions: b.config.AlicloudImageDestinationRegions,
-			AlicloudImageDestinationNames:   b.config.AlicloudImageDestinationNames,
-			RegionId:                        b.config.AlicloudRegion,
-			WaitCopyingImageReadyTimeout:    b.getCopyingImageReadyTimeout(),
-		},
-		&stepShareAlicloudImage{
-			AlicloudImageShareAccounts:   b.config.AlicloudImageShareAccounts,
-			AlicloudImageUNShareAccounts: b.config.AlicloudImageUNShareAccounts,
-			RegionId:                     b.config.AlicloudRegion,
-		})
-
 	// Run!
 	b.runner = commonsteps.NewRunner(steps, b.config.PackerConfig, ui)
 	b.runner.Run(ctx, state)
