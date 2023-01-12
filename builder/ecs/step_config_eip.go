@@ -95,7 +95,6 @@ func (s *stepConfigAlicloudEIP) Run(ctx context.Context, state multistep.StateBa
 					return WaitForExpectToRetry
 				}
 				ipaddress = ipAddresses[0]
-				state.Put("ipaddress", ipaddress)
 				return WaitForExpectSuccess
 			},
 			RetryTimes: 2,
@@ -105,7 +104,7 @@ func (s *stepConfigAlicloudEIP) Run(ctx context.Context, state multistep.StateBa
 			return multistep.ActionHalt
 		}
 	}
-
+	state.Put("ipaddress", ipaddress)
 	return multistep.ActionContinue
 }
 
