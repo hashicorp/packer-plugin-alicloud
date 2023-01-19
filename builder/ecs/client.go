@@ -117,10 +117,6 @@ const (
 	mediumRetryTimes     = 360
 )
 
-const (
-	SkipCreateImage = "you set skip_create_image true"
-)
-
 type WaitForExpectEvalResult struct {
 	evalPass  bool
 	stopRetry bool
