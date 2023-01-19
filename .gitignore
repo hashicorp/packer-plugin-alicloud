@@ -1,4 +1,6 @@
 main
 dist/*
 packer-plugin-alicloud
+.docs
 .idea
+

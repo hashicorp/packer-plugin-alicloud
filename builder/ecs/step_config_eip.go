@@ -78,16 +78,33 @@ func (s *stepConfigAlicloudEIP) Run(ctx context.Context, state multistep.StateBa
 	}
 
 	if s.SSHPrivateIp {
-		ipaddresses := instance.VpcAttributes.PrivateIpAddress.IpAddress
-		if len(ipaddress) == 0 {
+		_, err := client.WaitForExpected(&WaitForExpectArgs{
+			RequestFunc: func() (responses.AcsResponse, error) {
+				describeInstancesRequest := ecs.CreateDescribeInstancesRequest()
+				describeInstancesRequest.InstanceIds = fmt.Sprintf("[\"%s\"]", instance.InstanceId)
+				return client.DescribeInstances(describeInstancesRequest)
+			},
+			EvalFunc: func(response responses.AcsResponse, err error) WaitForExpectEvalResult {
+				if err != nil {
+					return WaitForExpectToRetry
+				}
+				instancesResponse := response.(*ecs.DescribeInstancesResponse)
+				instance = &instancesResponse.Instances.Instance[0]
+				ipAddresses := instance.VpcAttributes.PrivateIpAddress.IpAddress
+				if len(ipAddresses) == 0 {
+					return WaitForExpectToRetry
+				}
+				ipaddress = ipAddresses[0]
+				return WaitForExpectSuccess
+			},
+			RetryTimes: 2,
+		})
+		if err != nil {
 			ui.Say("Failed to get private ip of instance")
 			return multistep.ActionHalt
 		}
-		ipaddress = ipaddresses[0]
 	}
-
 	state.Put("ipaddress", ipaddress)
-
 	return multistep.ActionContinue
 }
 

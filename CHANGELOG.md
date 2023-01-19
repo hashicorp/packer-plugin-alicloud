@@ -1,3 +1,8 @@
+# Latest Release
+
+Please refer to [releases](https://github.com/hashicorp/packer-plugin-alicloud/releases) for the latest CHANGELOG information.
+
+---
 ## 1.0.0 (June 14, 2021)
 
 * Fix plugin version attribution for plugin binaries [GH-24]

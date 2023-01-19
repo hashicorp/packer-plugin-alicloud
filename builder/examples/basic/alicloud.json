@@ -13,7 +13,8 @@
     "ssh_username":"root",
     "instance_type":"ecs.n1.tiny",
     "internet_charge_type":"PayByTraffic",
-    "io_optimized":"true"
+    "io_optimized":"true",
+    "associate_public_ip_address":"true"
   }],
   "provisioners": [{
     "type": "shell",
