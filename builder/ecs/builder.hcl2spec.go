@@ -98,7 +98,7 @@ type FlatConfig struct {
 	SecurityGroupId                   *string                  `mapstructure:"security_group_id" required:"false" cty:"security_group_id" hcl:"security_group_id"`
 	SecurityGroupName                 *string                  `mapstructure:"security_group_name" required:"false" cty:"security_group_name" hcl:"security_group_name"`
 	SecurityEnhancementStrategy       *string                  `mapstructure:"security_enhancement_strategy" required:"false" cty:"security_enhancement_strategy" hcl:"security_enhancement_strategy"`
-	RamRoleName                   	  *string                  `mapstructure:"ecs_ram_role_name" required:"false" cty:"ecs_ram_role_name" hcl:"ecs_ram_role_name"`
+	RamRoleName                       *string                  `mapstructure:"ecs_ram_role_name" required:"false" cty:"ecs_ram_role_name" hcl:"ecs_ram_role_name"`
 	UserData                          *string                  `mapstructure:"user_data" required:"false" cty:"user_data" hcl:"user_data"`
 	UserDataFile                      *string                  `mapstructure:"user_data_file" required:"false" cty:"user_data_file" hcl:"user_data_file"`
 	VpcId                             *string                  `mapstructure:"vpc_id" required:"false" cty:"vpc_id" hcl:"vpc_id"`
