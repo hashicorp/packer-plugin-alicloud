@@ -62,6 +62,7 @@ type FlatConfig struct {
 	SecurityGroupId                   *string                      `mapstructure:"security_group_id" required:"false" cty:"security_group_id" hcl:"security_group_id"`
 	SecurityGroupName                 *string                      `mapstructure:"security_group_name" required:"false" cty:"security_group_name" hcl:"security_group_name"`
 	SecurityEnhancementStrategy       *string                      `mapstructure:"security_enhancement_strategy" required:"false" cty:"security_enhancement_strategy" hcl:"security_enhancement_strategy"`
+	RamRoleName                   	  *string                  	   `mapstructure:"ecs_ram_role_name" required:"false" cty:"ecs_ram_role_name" hcl:"ecs_ram_role_name"`
 	UserData                          *string                      `mapstructure:"user_data" required:"false" cty:"user_data" hcl:"user_data"`
 	UserDataFile                      *string                      `mapstructure:"user_data_file" required:"false" cty:"user_data_file" hcl:"user_data_file"`
 	VpcId                             *string                      `mapstructure:"vpc_id" required:"false" cty:"vpc_id" hcl:"vpc_id"`
@@ -197,6 +198,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"security_group_id":                &hcldec.AttrSpec{Name: "security_group_id", Type: cty.String, Required: false},
 		"security_group_name":              &hcldec.AttrSpec{Name: "security_group_name", Type: cty.String, Required: false},
 		"security_enhancement_strategy":    &hcldec.AttrSpec{Name: "security_enhancement_strategy", Type: cty.String, Required: false},
+		"ecs_ram_role_name":                &hcldec.AttrSpec{Name: "ecs_ram_role_name", Type: cty.String, Required: false},
 		"user_data":                        &hcldec.AttrSpec{Name: "user_data", Type: cty.String, Required: false},
 		"user_data_file":                   &hcldec.AttrSpec{Name: "user_data_file", Type: cty.String, Required: false},
 		"vpc_id":                           &hcldec.AttrSpec{Name: "vpc_id", Type: cty.String, Required: false},
