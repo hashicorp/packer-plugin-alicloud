@@ -22,7 +22,7 @@ type stepCreateAlicloudInstance struct {
 	InstanceType                string
 	UserData                    string
 	UserDataFile                string
-	RamRoleName                 string
+	InstanceRamRole             string
 	Tags                        map[string]string
 	RegionId                    string
 	InternetChargeType          string
@@ -118,7 +118,7 @@ func (s *stepCreateAlicloudInstance) buildCreateInstanceRequest(state multistep.
 	request.RegionId = s.RegionId
 	request.InstanceType = s.InstanceType
 	request.InstanceName = s.InstanceName
-	request.RamRoleName = s.RamRoleName
+	request.RamRoleName = s.InstanceRamRole
 	request.Tag = buildCreateInstanceTags(s.Tags)
 	request.ZoneId = s.ZoneId
 	request.SecurityEnhancementStrategy = s.SecurityEnhancementStrategy

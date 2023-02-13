@@ -50,8 +50,8 @@ type RunConfig struct {
 	// E.g., Sysprep a windows which may shutdown the instance within its command.
 	// The default value is false.
 	DisableStopInstance bool `mapstructure:"disable_stop_instance" required:"false"`
-	// Ram Role to apply when launching the instance.
-	RamRoleName string `mapstructure:"ram_role_name" required:"false"`
+	// The name of an RAM role to launch the instance with.
+	InstanceRamRole string `mapstructure:"instance_ram_role" required:"false"`
 	// Key/value pair tags to apply to the instance that is *launched*
 	// to create the image.
 	RunTags map[string]string `mapstructure:"run_tags" required:"false"`

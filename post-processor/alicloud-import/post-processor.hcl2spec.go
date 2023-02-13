@@ -58,6 +58,7 @@ type FlatConfig struct {
 	AlicloudImageFamily               *string                      `mapstructure:"image_family" required:"true" cty:"image_family" hcl:"image_family"`
 	ForceStopInstance                 *bool                        `mapstructure:"force_stop_instance" required:"false" cty:"force_stop_instance" hcl:"force_stop_instance"`
 	DisableStopInstance               *bool                        `mapstructure:"disable_stop_instance" required:"false" cty:"disable_stop_instance" hcl:"disable_stop_instance"`
+	InstanceRamRole                   *string                      `mapstructure:"instance_ram_role" required:"false" cty:"instance_ram_role" hcl:"instance_ram_role"`
 	RunTags                           map[string]string            `mapstructure:"run_tags" required:"false" cty:"run_tags" hcl:"run_tags"`
 	SecurityGroupId                   *string                      `mapstructure:"security_group_id" required:"false" cty:"security_group_id" hcl:"security_group_id"`
 	SecurityGroupName                 *string                      `mapstructure:"security_group_name" required:"false" cty:"security_group_name" hcl:"security_group_name"`
@@ -123,8 +124,8 @@ type FlatConfig struct {
 	WinRMUseSSL                       *bool                        `mapstructure:"winrm_use_ssl" cty:"winrm_use_ssl" hcl:"winrm_use_ssl"`
 	WinRMInsecure                     *bool                        `mapstructure:"winrm_insecure" cty:"winrm_insecure" hcl:"winrm_insecure"`
 	WinRMUseNTLM                      *bool                        `mapstructure:"winrm_use_ntlm" cty:"winrm_use_ntlm" hcl:"winrm_use_ntlm"`
-	SkipCreateImage                   *bool                        `mapstructure:"skip_create_image" cty:"skip_create_image" hcl:"skip_create_image"`
 	SSHPrivateIp                      *bool                        `mapstructure:"ssh_private_ip" required:"false" cty:"ssh_private_ip" hcl:"ssh_private_ip"`
+	SkipCreateImage                   *bool                        `mapstructure:"skip_create_image" required:"false" cty:"skip_create_image" hcl:"skip_create_image"`
 	OSSBucket                         *string                      `mapstructure:"oss_bucket_name" required:"true" cty:"oss_bucket_name" hcl:"oss_bucket_name"`
 	OSSKey                            *string                      `mapstructure:"oss_key_name" cty:"oss_key_name" hcl:"oss_key_name"`
 	SkipClean                         *bool                        `mapstructure:"skip_clean" cty:"skip_clean" hcl:"skip_clean"`
@@ -193,6 +194,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"image_family":                     &hcldec.AttrSpec{Name: "image_family", Type: cty.String, Required: false},
 		"force_stop_instance":              &hcldec.AttrSpec{Name: "force_stop_instance", Type: cty.Bool, Required: false},
 		"disable_stop_instance":            &hcldec.AttrSpec{Name: "disable_stop_instance", Type: cty.Bool, Required: false},
+		"instance_ram_role":                &hcldec.AttrSpec{Name: "instance_ram_role", Type: cty.String, Required: false},
 		"run_tags":                         &hcldec.AttrSpec{Name: "run_tags", Type: cty.Map(cty.String), Required: false},
 		"security_group_id":                &hcldec.AttrSpec{Name: "security_group_id", Type: cty.String, Required: false},
 		"security_group_name":              &hcldec.AttrSpec{Name: "security_group_name", Type: cty.String, Required: false},
@@ -258,8 +260,8 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"winrm_use_ssl":                    &hcldec.AttrSpec{Name: "winrm_use_ssl", Type: cty.Bool, Required: false},
 		"winrm_insecure":                   &hcldec.AttrSpec{Name: "winrm_insecure", Type: cty.Bool, Required: false},
 		"winrm_use_ntlm":                   &hcldec.AttrSpec{Name: "winrm_use_ntlm", Type: cty.Bool, Required: false},
-		"skip_create_image":                &hcldec.AttrSpec{Name: "skip_create_image", Type: cty.Bool, Required: false},
 		"ssh_private_ip":                   &hcldec.AttrSpec{Name: "ssh_private_ip", Type: cty.Bool, Required: false},
+		"skip_create_image":                &hcldec.AttrSpec{Name: "skip_create_image", Type: cty.Bool, Required: false},
 		"oss_bucket_name":                  &hcldec.AttrSpec{Name: "oss_bucket_name", Type: cty.String, Required: false},
 		"oss_key_name":                     &hcldec.AttrSpec{Name: "oss_key_name", Type: cty.String, Required: false},
 		"skip_clean":                       &hcldec.AttrSpec{Name: "skip_clean", Type: cty.Bool, Required: false},
