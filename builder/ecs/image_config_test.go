@@ -35,11 +35,9 @@ func TestAMIConfigPrepare_regions(t *testing.T) {
 	}
 
 	c.AlicloudImageDestinationRegions = nil
-	c.AlicloudImageSkipRegionValidation = true
 	if err := c.Prepare(nil); err != nil {
 		t.Fatal("shouldn't have error")
 	}
-	c.AlicloudImageSkipRegionValidation = false
 }
 
 func TestECSImageConfigPrepare_imageTags(t *testing.T) {

@@ -149,9 +149,6 @@ type AlicloudImageConfig struct {
 	// default data disks with instance types are not concerned. The default
 	// value is false.
 	AlicloudImageIgnoreDataDisks bool `mapstructure:"image_ignore_data_disks" required:"false"`
-	// The region validation can be skipped if this value is true, the default
-	// value is false.
-	AlicloudImageSkipRegionValidation bool `mapstructure:"skip_region_validation" required:"false"`
 	// Key/value pair tags applied to the destination image and relevant
 	// snapshots.
 	AlicloudImageTags map[string]string `mapstructure:"tags" required:"false"`
