@@ -72,15 +72,7 @@ type Config struct {
 	// after the import process has completed. `true` means that we should
 	// leave it in the OSS bucket, `false` means to clean it out. Defaults to
 	// `false`.
-	SkipClean bool              `mapstructure:"skip_clean"`
-	Tags      map[string]string `mapstructure:"tags"`
-	// The description of the image, with a length limit of `0` to `256`
-	// characters. Leaving it blank means null, which is the default value. It
-	// cannot begin with `http://` or `https://`.
-	AlicloudImageDescription        string   `mapstructure:"image_description"`
-	AlicloudResourceGroupId         string   `mapstructure:"resource_group_id"`
-	AlicloudImageShareAccounts      []string `mapstructure:"image_share_account"`
-	AlicloudImageDestinationRegions []string `mapstructure:"image_copy_regions"`
+	SkipClean bool `mapstructure:"skip_clean"`
 	// Type of the OS, like linux/windows
 	OSType string `mapstructure:"image_os_type" required:"true"`
 	// Platform such as `CentOS`
@@ -97,11 +89,6 @@ type Config struct {
 	// The format of the image for import, now alicloud only support RAW and
 	// VHD.
 	Format string `mapstructure:"format" required:"true"`
-	// If this value is true, when the target image name is duplicated with an
-	// existing image, it will delete the existing image and then create the
-	// target image, otherwise, the creation will fail. The default value is
-	// false.
-	AlicloudImageForceDelete bool `mapstructure:"image_force_delete"`
 
 	ctx interpolate.Context
 }
