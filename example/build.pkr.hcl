@@ -1,3 +1,6 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 // This assumes you have env vars ALICLOUD_ACCESS_KEY, ALICLOUD_SECRET_KEY,
 // and ALICLOUD_REGION set.
 packer {

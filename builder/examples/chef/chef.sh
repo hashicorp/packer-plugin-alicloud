@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 #if the related deb pkg not found, please replace with it other available repository url
 HOSTNAME=`ifconfig eth1|grep 'inet addr'|cut -d ":" -f2|cut -d " " -f1`
 if [ not $HOSTNAME ] ; then
