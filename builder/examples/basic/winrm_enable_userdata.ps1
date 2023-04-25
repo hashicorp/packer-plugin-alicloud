@@ -1,3 +1,6 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 #powershell
 write-output "Running User Data Script"
 write-host "(host) Running User Data Script"

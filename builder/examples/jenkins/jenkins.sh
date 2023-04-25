@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 
 JENKINS_URL='http://mirrors.jenkins.io/war-stable/2.32.2/jenkins.war'
 
