@@ -166,8 +166,7 @@ The following policy document provides the minimal set permissions necessary for
 
 Here is a basic example for Alicloud.
 
-<Tabs>
-<Tab heading="JSON">
+### JSON
 
 ```json
 {
@@ -203,8 +202,7 @@ Here is a basic example for Alicloud.
 }
 ```
 
-</Tab>
-<Tab heading="HCL2">
+### HCL2
 
 ```hcl
 variable "access_key" {
@@ -243,8 +241,6 @@ build {
 }
 ```
 
-</Tab>
-</Tabs>
 
 ~> Note: Images can become deprecated after a while; run
 `aliyun ecs DescribeImages` to find one that exists.
