@@ -2,7 +2,7 @@
 # https://github.com/hashicorp/integration-template#metadata-configuration
 integration {
   name = "Alicloud"
-  description = "The Alicloud multi-component plugin can be used with HashiCorp Packer to create custom images."
+  description = "The Alicloud plugin can be used with HashiCorp Packer to create custom images on the Alibaba Cloud platform"
   identifier = "packer/BrandonRomano/alicloud"
   component {
     type = "builder"
