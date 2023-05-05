@@ -9,8 +9,10 @@
 
 -->
 
-The Alicloud plugin is intended as a starting point for creating Packer plugins, containing:
+The Alicloud plugin can be used to create or import custom images on on the Alibaba Cloud platform.
 
-- [alicloud-ecs builder](/docs/builders/alicloud-ecs.mdx) - provides the capability to build customized images based on an existing base image.
+### Components
 
-- [alicloud-import post-processor](/docs/post-processors/alicloud-import.mdx) - Takes a RAW or VHD artifact from various builders and imports it to an Alicloud ECS Image.
+- [alicloud-ecs builder](/packer/integrations/hashicorp/alicloud-ecs) - Provides the capability to build customized images based on an existing base image.
+
+- [alicloud-import post-processor](/packer/integrations/hashicorp/alicloud-import) - Takes a RAW or VHD artifact from various builders and imports it to an Alicloud ECS Image.
