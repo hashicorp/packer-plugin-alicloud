@@ -1,4 +1,4 @@
-# Alicloud Plugins
+# Alicloud
 
 <!--
   Include a short overview about the plugin.
@@ -13,6 +13,8 @@ The Alicloud plugin can be used to create or import custom images on on the Alib
 
 ### Components
 
+#### Builders
 - [alicloud-ecs builder](/packer/integrations/hashicorp/alicloud-ecs) - Provides the capability to build customized images based on an existing base image.
 
+#### Post-Processors:
 - [alicloud-import post-processor](/packer/integrations/hashicorp/alicloud-import) - Takes a RAW or VHD artifact from various builders and imports it to an Alicloud ECS Image.
