@@ -6,12 +6,12 @@ integration {
   identifier = "packer/BrandonRomano/alicloud"
   component {
     type = "builder"
-    name = "Alicloud Image Builder"
+    name = "Alicloud Image"
     slug = "alicloud-ecs"
   }
   component {
     type = "post-processor"
-    name = "Alicloud Import Post-Processor"
+    name = "Alicloud Import"
     slug = "alicloud-import"
   }
 }
