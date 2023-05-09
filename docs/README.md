@@ -1,11 +1,9 @@
 The Alicloud plugin can be used to create or import custom images on on the Alibaba Cloud platform.
 
-### Example Usage
+### Installation
 Packer 1.7.0 and later
 
----
-
-```
+```hcl
 packer {
   required_plugins {
     amazon = {
@@ -13,27 +11,6 @@ packer {
       source = "github.com/hashicorp/amazon"
     }
   }
-}
-
-source "alicloud-ecs" "basic-example" {
-      access_key = var.access_key
-      secret_key = var.secret_key
-      region = "cn-beijing"
-      image_name = "packer_test2"
-      source_image = "centos_7_04_64_20G_alibase_201701015.vhd"
-      ssh_username = "root"
-      instance_type = "ecs.n1.tiny"
-      io_optimized = true
-      internet_charge_type = "PayByTraffic"
-      image_force_delete = true
-      run_tags  = {
-        "Built by"   = "Packer"
-        "Managed by" = "Packer"
-      }
-}
-
-build {
-  sources = ["sources.alicloud-ecs.basic-example"]
 }
 ```
 
