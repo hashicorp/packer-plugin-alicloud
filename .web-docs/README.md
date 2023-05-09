@@ -6,9 +6,9 @@ Packer 1.7.0 and later
 ```hcl
 packer {
   required_plugins {
-    amazon = {
+    alicloud = {
       version = ">= 1.0.0"
-      source = "github.com/hashicorp/amazon"
+      source = "github.com/hashicorp/alicloud"
     }
   }
 }
@@ -16,8 +16,8 @@ packer {
 
 ### Components
 
-**Builders**
+#### Builders
 - [alicloud-ecs](/packer/integrations/hashicorp/alicloud/latest/components/alicloud-ecs) - Provides the capability to build customized images based on an existing base image.
 
-**Post-Processors**
+#### Post-Processors
 - [alicloud-import](/packer/integrations/hashicorp/alicloud/latest/components/alicloud-import) - Takes a RAW or VHD artifact from various builders and imports it to an Alicloud ECS Image.
