@@ -469,7 +469,7 @@ The following policy document provides the minimal set permissions necessary for
 
 Here is a basic example for Alicloud.
 
-### JSON
+**JSON**
 
 ```json
 {
@@ -505,7 +505,7 @@ Here is a basic example for Alicloud.
 }
 ```
 
-### HCL2
+**HCL2**
 
 ```hcl
 variable "access_key" {
