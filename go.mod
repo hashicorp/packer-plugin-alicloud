@@ -5,10 +5,10 @@ go 1.18
 require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1028
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.8+incompatible
-	github.com/hashicorp/hcl/v2 v2.13.0
-	github.com/hashicorp/packer-plugin-sdk v0.4.0
+	github.com/hashicorp/hcl/v2 v2.16.2
+	github.com/hashicorp/packer-plugin-sdk v0.5.0
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/zclconf/go-cty v1.10.0
+	github.com/zclconf/go-cty v1.12.1
 )
 
 require (
