@@ -391,7 +391,7 @@ builder.
   properly.
 
 
-### Alicloud RAM permission:
+### Alicloud RAM permission
 
 Finally the plugin should gain a set of Alicloud RAM permission to call Alicloud API.
 
@@ -460,7 +460,7 @@ The following policy document provides the minimal set permissions necessary for
 }
 ```
 
-# Disk Devices Configuration:
+# Disk Devices Configuration
 
 <!-- Code generated from the comments of the AlicloudDiskDevice struct in builder/ecs/image_config.go; DO NOT EDIT MANUALLY -->
 

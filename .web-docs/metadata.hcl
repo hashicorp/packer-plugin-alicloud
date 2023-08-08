@@ -6,7 +6,7 @@ integration {
   identifier = "packer/BrandonRomano/alicloud"
   component {
     type = "builder"
-    name = "Alicloud Image"
+    name = "Alicloud ECS"
     slug = "alicloud-ecs"
   }
   component {

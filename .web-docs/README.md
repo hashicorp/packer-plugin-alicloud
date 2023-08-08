@@ -1,17 +1,25 @@
-The Alicloud plugin can be used to create or import custom images on on the Alibaba Cloud platform.
+The Alicloud plugin can be used to create or import custom images on the Alibaba Cloud platform.
 
 ### Installation
-Packer 1.7.0 and later
+
+To install this plugin, copy and paste this code into your Packer configuration .
+Then, run [`packer init`](https://www.packer.io/docs/commands/init).
 
 ```hcl
 packer {
   required_plugins {
     alicloud = {
-      version = ">= 1.0.0"
-      source = "github.com/hashicorp/alicloud"
+      source  = "github.com/hashicorp/alicloud"
+      version = "~> 1"
     }
   }
 }
+```
+
+Alternatively, you can use `packer plugins install` to manage installation of this plugin.
+
+```sh
+$ packer plugins install github.com/hashicorp/alicloud
 ```
 
 ### Components
