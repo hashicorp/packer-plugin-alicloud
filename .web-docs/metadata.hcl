@@ -3,7 +3,7 @@
 integration {
   name = "Alicloud"
   description = "The Alicloud plugin can be used with HashiCorp Packer to create custom images on the Alibaba Cloud platform"
-  identifier = "packer/BrandonRomano/alicloud"
+  identifier = "packer/hashicorp/alicloud"
   component {
     type = "builder"
     name = "Alicloud ECS"
