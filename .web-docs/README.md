@@ -25,7 +25,7 @@ $ packer plugins install github.com/hashicorp/alicloud
 ### Components
 
 #### Builders
-- [alicloud-ecs](/packer/integrations/hashicorp/alicloud/latest/components/alicloud-ecs) - Provides the capability to build customized images based on an existing base image.
+- [alicloud-ecs](/packer/integrations/hashicorp/alicloud/latest/components/builder/alicloud-ecs) - Provides the capability to build customized images based on an existing base image.
 
 #### Post-Processors
-- [alicloud-import](/packer/integrations/hashicorp/alicloud/latest/components/alicloud-import) - Takes a RAW or VHD artifact from various builders and imports it to an Alicloud ECS Image.
+- [alicloud-import](/packer/integrations/hashicorp/alicloud/latest/components/post-processor/alicloud-import) - Takes a RAW or VHD artifact from various builders and imports it to an Alicloud ECS Image.
