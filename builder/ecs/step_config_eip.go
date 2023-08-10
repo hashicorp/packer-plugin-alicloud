@@ -5,6 +5,7 @@ package ecs
 
 import (
 	"context"
+	errorsNew "errors"
 	"fmt"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/errors"
@@ -23,6 +24,7 @@ type stepConfigAlicloudEIP struct {
 	InternetMaxBandwidthOut  int
 	allocatedId              string
 	SSHPrivateIp             bool
+	EipId                    string
 }
 
 var allocateEipAddressRetryErrors = []string{
@@ -35,33 +37,58 @@ func (s *stepConfigAlicloudEIP) Run(ctx context.Context, state multistep.StateBa
 	instance := state.Get("instance").(*ecs.Instance)
 
 	var ipaddress string
+	var allocateId string
 
-	if s.AssociatePublicIpAddress {
-		ui.Say("Allocating eip...")
+	if len(s.EipId) != 0 {
+		ui.Say("Querying eip...")
+		describeEipAddressRequest := ecs.CreateDescribeEipAddressesRequest()
+		describeEipAddressRequest.AllocationId = s.EipId
 
-		allocateEipAddressRequest := s.buildAllocateEipAddressRequest(state)
-		allocateEipAddressResponse, err := client.WaitForExpected(&WaitForExpectArgs{
-			RequestFunc: func() (responses.AcsResponse, error) {
-				return client.AllocateEipAddress(allocateEipAddressRequest)
-			},
-			EvalFunc: client.EvalCouldRetryResponse(allocateEipAddressRetryErrors, EvalRetryErrorType),
-		})
-
+		eipsResponse, err := client.DescribeEipAddresses(describeEipAddressRequest)
 		if err != nil {
-			return halt(state, err, "Error allocating eip")
+			return halt(state, err, "Failed querying eip")
 		}
 
-		ipaddress = allocateEipAddressResponse.(*ecs.AllocateEipAddressResponse).EipAddress
-		ui.Message(fmt.Sprintf("Allocated eip: %s", ipaddress))
+		eips := eipsResponse.EipAddresses.EipAddress
+		if len(eips) == 0 {
+			message := fmt.Sprintf("The specified eip {%s} doesn't exist.", s.EipId)
+			return halt(state, errorsNew.New(message), "")
+		}
 
-		allocateId := allocateEipAddressResponse.(*ecs.AllocateEipAddressResponse).AllocationId
+		ipaddress = eips[0].IpAddress
+		allocateId = eips[0].AllocationId
 		s.allocatedId = allocateId
+		ui.Message(fmt.Sprintf("Using eip: %s", ipaddress))
+	}
+
+	if s.AssociatePublicIpAddress {
+		var err error
+		if len(ipaddress) == 0 {
+			ui.Say("Allocating eip...")
+
+			allocateEipAddressRequest := s.buildAllocateEipAddressRequest(state)
+			allocateEipAddressResponse, err := client.WaitForExpected(&WaitForExpectArgs{
+				RequestFunc: func() (responses.AcsResponse, error) {
+					return client.AllocateEipAddress(allocateEipAddressRequest)
+				},
+				EvalFunc: client.EvalCouldRetryResponse(allocateEipAddressRetryErrors, EvalRetryErrorType),
+			})
+
+			if err != nil {
+				return halt(state, err, "Error allocating eip")
+			}
+
+			ipaddress = allocateEipAddressResponse.(*ecs.AllocateEipAddressResponse).EipAddress
+			ui.Message(fmt.Sprintf("Allocated eip: %s", ipaddress))
+
+			allocateId = allocateEipAddressResponse.(*ecs.AllocateEipAddressResponse).AllocationId
+			s.allocatedId = allocateId
+		}
 
 		err = s.waitForEipStatus(client, instance.RegionId, s.allocatedId, EipStatusAvailable)
 		if err != nil {
 			return halt(state, err, "Error wait eip available timeout")
 		}
-
 		associateEipAddressRequest := ecs.CreateAssociateEipAddressRequest()
 		associateEipAddressRequest.AllocationId = allocateId
 		associateEipAddressRequest.InstanceId = instance.InstanceId
@@ -116,7 +143,7 @@ func (s *stepConfigAlicloudEIP) Cleanup(state multistep.StateBag) {
 		return
 	}
 
-	cleanUpMessage(state, "EIP")
+	cleanUpMessage(state, "EIP association")
 
 	client := state.Get("client").(*ClientWrapper)
 	instance := state.Get("instance").(*ecs.Instance)
@@ -133,6 +160,10 @@ func (s *stepConfigAlicloudEIP) Cleanup(state multistep.StateBag) {
 		ui.Say(fmt.Sprintf("Timeout while unassociating eip: %s", err))
 	}
 
+	if len(s.EipId) > 0 {
+		return
+	}
+	cleanUpMessage(state, "EIP")
 	releaseEipAddressRequest := ecs.CreateReleaseEipAddressRequest()
 	releaseEipAddressRequest.AllocationId = s.allocatedId
 	if _, err := client.ReleaseEipAddress(releaseEipAddressRequest); err != nil {
