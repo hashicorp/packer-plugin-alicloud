@@ -166,7 +166,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			InternetChargeType:       b.config.InternetChargeType,
 			InternetMaxBandwidthOut:  b.config.InternetMaxBandwidthOut,
 			SSHPrivateIp:             b.config.SSHPrivateIp,
-			EipId:					  b.config.EipId,
+			EIPId:                    b.config.EIPId,
 		})
 	} else {
 		steps = append(steps, &stepConfigAlicloudPublicIP{

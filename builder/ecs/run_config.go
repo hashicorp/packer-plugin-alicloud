@@ -99,7 +99,7 @@ type RunConfig struct {
 	// The ID of the VSwitch to be used.
 	VSwitchName string `mapstructure:"vswitch_name" required:"false"`
 	//The ID of the EIP to be used as public ip for the instance
-	EipId string `mapstructure:"eip_id" required:"false"`
+	EIPId string `mapstructure:"eip_id" required:"false"`
 	// Display name of the instance, which is a string of 2 to 128 Chinese or
 	// English characters. It must begin with an uppercase/lowercase letter or
 	// a Chinese character and can contain numerals, `.`, `_`, or `-`. The
