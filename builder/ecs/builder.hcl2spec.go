@@ -103,10 +103,10 @@ type FlatConfig struct {
 	UserDataFile                      *string                  `mapstructure:"user_data_file" required:"false" cty:"user_data_file" hcl:"user_data_file"`
 	VpcId                             *string                  `mapstructure:"vpc_id" required:"false" cty:"vpc_id" hcl:"vpc_id"`
 	VpcName                           *string                  `mapstructure:"vpc_name" required:"false" cty:"vpc_name" hcl:"vpc_name"`
-	EipId							  *string				   `mapstructure:"eip_id" required:"false" cty:"eip_id" hcl:"eip_id"`
 	CidrBlock                         *string                  `mapstructure:"vpc_cidr_block" required:"false" cty:"vpc_cidr_block" hcl:"vpc_cidr_block"`
 	VSwitchId                         *string                  `mapstructure:"vswitch_id" required:"false" cty:"vswitch_id" hcl:"vswitch_id"`
 	VSwitchName                       *string                  `mapstructure:"vswitch_name" required:"false" cty:"vswitch_name" hcl:"vswitch_name"`
+	EipId                             *string                  `mapstructure:"eip_id" required:"false" cty:"eip_id" hcl:"eip_id"`
 	InstanceName                      *string                  `mapstructure:"instance_name" required:"false" cty:"instance_name" hcl:"instance_name"`
 	InternetChargeType                *string                  `mapstructure:"internet_charge_type" required:"false" cty:"internet_charge_type" hcl:"internet_charge_type"`
 	InternetMaxBandwidthOut           *int                     `mapstructure:"internet_max_bandwidth_out" required:"false" cty:"internet_max_bandwidth_out" hcl:"internet_max_bandwidth_out"`
@@ -232,10 +232,10 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"user_data_file":                   &hcldec.AttrSpec{Name: "user_data_file", Type: cty.String, Required: false},
 		"vpc_id":                           &hcldec.AttrSpec{Name: "vpc_id", Type: cty.String, Required: false},
 		"vpc_name":                         &hcldec.AttrSpec{Name: "vpc_name", Type: cty.String, Required: false},
-		"eip_id":                           &hcldec.AttrSpec{Name: "eip_id", Type: cty.String, Required: false},
 		"vpc_cidr_block":                   &hcldec.AttrSpec{Name: "vpc_cidr_block", Type: cty.String, Required: false},
 		"vswitch_id":                       &hcldec.AttrSpec{Name: "vswitch_id", Type: cty.String, Required: false},
 		"vswitch_name":                     &hcldec.AttrSpec{Name: "vswitch_name", Type: cty.String, Required: false},
+		"eip_id":                           &hcldec.AttrSpec{Name: "eip_id", Type: cty.String, Required: false},
 		"instance_name":                    &hcldec.AttrSpec{Name: "instance_name", Type: cty.String, Required: false},
 		"internet_charge_type":             &hcldec.AttrSpec{Name: "internet_charge_type", Type: cty.String, Required: false},
 		"internet_max_bandwidth_out":       &hcldec.AttrSpec{Name: "internet_max_bandwidth_out", Type: cty.Number, Required: false},
