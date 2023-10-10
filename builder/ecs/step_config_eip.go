@@ -5,9 +5,10 @@ package ecs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/errors"
+	sdkerr "github.com/aliyun/alibaba-cloud-sdk-go/sdk/errors"
 	"github.com/hashicorp/packer-plugin-sdk/uuid"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/responses"
@@ -23,6 +24,7 @@ type stepConfigAlicloudEIP struct {
 	InternetMaxBandwidthOut  int
 	allocatedId              string
 	SSHPrivateIp             bool
+	EIPId                    string
 }
 
 var allocateEipAddressRetryErrors = []string{
@@ -35,48 +37,73 @@ func (s *stepConfigAlicloudEIP) Run(ctx context.Context, state multistep.StateBa
 	instance := state.Get("instance").(*ecs.Instance)
 
 	var ipaddress string
+	var allocateId string
 
-	if s.AssociatePublicIpAddress {
-		ui.Say("Allocating eip...")
+	if len(s.EIPId) != 0 {
+		ui.Say("Querying EIP...")
+		describeEipAddressRequest := ecs.CreateDescribeEipAddressesRequest()
+		describeEipAddressRequest.AllocationId = s.EIPId
 
-		allocateEipAddressRequest := s.buildAllocateEipAddressRequest(state)
-		allocateEipAddressResponse, err := client.WaitForExpected(&WaitForExpectArgs{
-			RequestFunc: func() (responses.AcsResponse, error) {
-				return client.AllocateEipAddress(allocateEipAddressRequest)
-			},
-			EvalFunc: client.EvalCouldRetryResponse(allocateEipAddressRetryErrors, EvalRetryErrorType),
-		})
-
+		eipsResponse, err := client.DescribeEipAddresses(describeEipAddressRequest)
 		if err != nil {
-			return halt(state, err, "Error allocating eip")
+			return halt(state, err, "Failed querying EIP")
 		}
 
-		ipaddress = allocateEipAddressResponse.(*ecs.AllocateEipAddressResponse).EipAddress
-		ui.Message(fmt.Sprintf("Allocated eip: %s", ipaddress))
+		eips := eipsResponse.EipAddresses.EipAddress
+		if len(eips) == 0 {
+			message := fmt.Sprintf("The specified EIP {%s} doesn't exist.", s.EIPId)
+			return halt(state, errors.New(message), "")
+		}
 
-		allocateId := allocateEipAddressResponse.(*ecs.AllocateEipAddressResponse).AllocationId
+		ipaddress = eips[0].IpAddress
+		allocateId = eips[0].AllocationId
 		s.allocatedId = allocateId
+		ui.Message(fmt.Sprintf("Using EIP: %s", ipaddress))
+	}
+
+	if s.AssociatePublicIpAddress {
+		var err error
+		if len(ipaddress) == 0 {
+			ui.Say("Allocating EIP...")
+
+			allocateEipAddressRequest := s.buildAllocateEipAddressRequest(state)
+			allocateEipAddressResponse, err := client.WaitForExpected(&WaitForExpectArgs{
+				RequestFunc: func() (responses.AcsResponse, error) {
+					return client.AllocateEipAddress(allocateEipAddressRequest)
+				},
+				EvalFunc: client.EvalCouldRetryResponse(allocateEipAddressRetryErrors, EvalRetryErrorType),
+			})
+
+			if err != nil {
+				return halt(state, err, "Error allocating EIP")
+			}
+
+			ipaddress = allocateEipAddressResponse.(*ecs.AllocateEipAddressResponse).EipAddress
+			ui.Message(fmt.Sprintf("Allocated EIP: %s", ipaddress))
+
+			allocateId = allocateEipAddressResponse.(*ecs.AllocateEipAddressResponse).AllocationId
+			s.allocatedId = allocateId
+		}
 
 		err = s.waitForEipStatus(client, instance.RegionId, s.allocatedId, EipStatusAvailable)
 		if err != nil {
-			return halt(state, err, "Error wait eip available timeout")
+			return halt(state, err, "Error wait EIP available timeout")
 		}
-
 		associateEipAddressRequest := ecs.CreateAssociateEipAddressRequest()
 		associateEipAddressRequest.AllocationId = allocateId
 		associateEipAddressRequest.InstanceId = instance.InstanceId
 		if _, err := client.AssociateEipAddress(associateEipAddressRequest); err != nil {
-			e, ok := err.(errors.Error)
+			e, ok := err.(sdkerr.Error)
 			if !ok || e.ErrorCode() != "TaskConflict" {
-				return halt(state, err, "Error associating eip")
+				return halt(state, err, "Error associating EIP")
 			}
 
-			ui.Error(fmt.Sprintf("Error associate eip: %s", err))
+			ui.Error(fmt.Sprintf("Error associating EIP: %s", err))
 		}
 
 		err = s.waitForEipStatus(client, instance.RegionId, s.allocatedId, EipStatusInUse)
 		if err != nil {
-			return halt(state, err, "Error wait eip associated timeout")
+			return halt(state, err, "Error wait EIP associating timeout")
 		}
 	}
 
@@ -103,7 +130,7 @@ func (s *stepConfigAlicloudEIP) Run(ctx context.Context, state multistep.StateBa
 			RetryTimes: 2,
 		})
 		if err != nil {
-			ui.Say("Failed to get private ip of instance")
+			ui.Say("Failed to get private IP of instance")
 			return multistep.ActionHalt
 		}
 	}
@@ -116,7 +143,7 @@ func (s *stepConfigAlicloudEIP) Cleanup(state multistep.StateBag) {
 		return
 	}
 
-	cleanUpMessage(state, "EIP")
+	cleanUpMessage(state, "EIP association")
 
 	client := state.Get("client").(*ClientWrapper)
 	instance := state.Get("instance").(*ecs.Instance)
@@ -126,17 +153,21 @@ func (s *stepConfigAlicloudEIP) Cleanup(state multistep.StateBag) {
 	unassociateEipAddressRequest.AllocationId = s.allocatedId
 	unassociateEipAddressRequest.InstanceId = instance.InstanceId
 	if _, err := client.UnassociateEipAddress(unassociateEipAddressRequest); err != nil {
-		ui.Say(fmt.Sprintf("Failed to unassociate eip: %s", err))
+		ui.Say(fmt.Sprintf("Failed to unassociate EIP: %s", err))
 	}
 
 	if err := s.waitForEipStatus(client, instance.RegionId, s.allocatedId, EipStatusAvailable); err != nil {
-		ui.Say(fmt.Sprintf("Timeout while unassociating eip: %s", err))
+		ui.Say(fmt.Sprintf("Timeout while unassociating EIP: %s", err))
 	}
 
+	if len(s.EIPId) > 0 {
+		return
+	}
+	cleanUpMessage(state, "EIP")
 	releaseEipAddressRequest := ecs.CreateReleaseEipAddressRequest()
 	releaseEipAddressRequest.AllocationId = s.allocatedId
 	if _, err := client.ReleaseEipAddress(releaseEipAddressRequest); err != nil {
-		ui.Say(fmt.Sprintf("Failed to release eip: %s", err))
+		ui.Say(fmt.Sprintf("Failed to release EIP: %s", err))
 	}
 }
 
@@ -149,7 +180,7 @@ func (s *stepConfigAlicloudEIP) waitForEipStatus(client *ClientWrapper, regionId
 		RequestFunc: func() (responses.AcsResponse, error) {
 			response, err := client.DescribeEipAddresses(describeEipAddressesRequest)
 			if err == nil && len(response.EipAddresses.EipAddress) == 0 {
-				err = fmt.Errorf("eip allocated is not find")
+				err = fmt.Errorf("EIP allocated is not found")
 			}
 
 			return response, err
