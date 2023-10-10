@@ -106,7 +106,7 @@ type FlatConfig struct {
 	CidrBlock                         *string                  `mapstructure:"vpc_cidr_block" required:"false" cty:"vpc_cidr_block" hcl:"vpc_cidr_block"`
 	VSwitchId                         *string                  `mapstructure:"vswitch_id" required:"false" cty:"vswitch_id" hcl:"vswitch_id"`
 	VSwitchName                       *string                  `mapstructure:"vswitch_name" required:"false" cty:"vswitch_name" hcl:"vswitch_name"`
-	EipId                             *string                  `mapstructure:"eip_id" required:"false" cty:"eip_id" hcl:"eip_id"`
+	EIPId                             *string                  `mapstructure:"eip_id" required:"false" cty:"eip_id" hcl:"eip_id"`
 	InstanceName                      *string                  `mapstructure:"instance_name" required:"false" cty:"instance_name" hcl:"instance_name"`
 	InternetChargeType                *string                  `mapstructure:"internet_charge_type" required:"false" cty:"internet_charge_type" hcl:"internet_charge_type"`
 	InternetMaxBandwidthOut           *int                     `mapstructure:"internet_max_bandwidth_out" required:"false" cty:"internet_max_bandwidth_out" hcl:"internet_max_bandwidth_out"`
