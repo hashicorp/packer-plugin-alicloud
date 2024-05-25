@@ -60,3 +60,95 @@ func TestECSImageConfigPrepare_imageTags(t *testing.T) {
 		}, c.AlicloudImageTags)
 	}
 }
+
+func TestECSImageConfigPrepare_targetImageFamily(t *testing.T) {
+	c := testAlicloudImageConfig()
+
+	// 1 character
+	c.AlicloudTargetImageFamily = "a"
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have error")
+	}
+
+	// 129 characters
+	c.AlicloudTargetImageFamily = "abcdefghijklmnopqrs1abcdefghijklmnopqrs2abcdefghijklmnopqrs3abcdefghijklmnopqrs4abcdefghijklmnopqrs5abcdefghijklmnopqrs6123456789"
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have error")
+	}
+
+	// invalid character
+	c.AlicloudTargetImageFamily = "abc%&"
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have error")
+	}
+
+	// begin with invalid character
+	c.AlicloudTargetImageFamily = ":abc"
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have error")
+	}
+
+	// start with acs:
+	c.AlicloudTargetImageFamily = "acs:"
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have error")
+	}
+
+	// start with aliyun
+	c.AlicloudTargetImageFamily = "aliyun"
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have error")
+	}
+
+	// start with http://
+	c.AlicloudTargetImageFamily = "http://"
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have error")
+	}
+
+	// start with https://
+	c.AlicloudTargetImageFamily = "https://"
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have error")
+	}
+
+	// success, begin with Chinese character， and contain :, -, _, .
+	c.AlicloudTargetImageFamily = "啊:-_5s是u.ccess"
+	if err := c.Prepare(nil); err != nil {
+		t.Fatalf("shouldn't have err: %s", err)
+	}
+
+	// success, begin with English character
+	c.AlicloudTargetImageFamily = "a啊:-_5s是u.ccess"
+	if err := c.Prepare(nil); err != nil {
+		t.Fatalf("shouldn't have err: %s", err)
+	}
+}
+
+func TestECSImageConfigPrepare_bootMode(t *testing.T) {
+	c := testAlicloudImageConfig()
+
+	// invalid
+	c.AlicloudBootMode = "boot"
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have error")
+	}
+
+	// UEFI
+	c.AlicloudBootMode = "UEFI"
+	if err := c.Prepare(nil); err != nil {
+		t.Fatalf("shouldn't have err: %s", err)
+	}
+
+	// BIOS
+	c.AlicloudBootMode = "BIOS"
+	if err := c.Prepare(nil); err != nil {
+		t.Fatalf("shouldn't have err: %s", err)
+	}
+
+	// UEFI-Preferred
+	c.AlicloudBootMode = "UEFI-Preferred"
+	if err := c.Prepare(nil); err != nil {
+		t.Fatalf("shouldn't have err: %s", err)
+	}
+}

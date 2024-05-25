@@ -135,6 +135,8 @@ func (s *stepCreateAlicloudImage) buildCreateImageRequest(state multistep.StateB
 	request.ImageVersion = config.AlicloudImageVersion
 	request.Description = config.AlicloudImageDescription
 	request.ResourceGroupId = config.AlicloudResourceGroupId
+	request.ImageFamily = config.AlicloudTargetImageFamily
+	request.BootMode = config.AlicloudBootMode
 
 	if s.AlicloudImageIgnoreDataDisks {
 		snapshotId := state.Get("alicloudsnapshot").(string)
