@@ -161,6 +161,13 @@ type AlicloudImageConfig struct {
 	// will allow you to create those programatically.
 	AlicloudImageTag    config.KeyValues `mapstructure:"tag" required:"false"`
 	AlicloudDiskDevices `mapstructure:",squash"`
+	// The image family of the user-defined image, [2, 128] English or Chinese
+	// characters. It must begin with an uppercase/lowercase letter or a
+	// Chinese character, and may contain numbers, `_` or `-`. It cannot begin
+	// with `aliyun`, `acs:`, `http://` or `https://`.
+	AlicloudTargetImageFamily string `mapstructure:"target_image_family" required:"false"`
+	// The boot mode of the user-defined image, it should to be one of 'BIOS', 'UEFI' or 'UEFI-Preferred'.
+	AlicloudBootMode string `mapstructure:"boot_mode" required:"false"`
 }
 
 func (c *AlicloudImageConfig) Prepare(ctx *interpolate.Context) []error {
@@ -178,7 +185,24 @@ func (c *AlicloudImageConfig) Prepare(ctx *interpolate.Context) []error {
 	if reg.FindString(c.AlicloudImageName) != "" {
 		errs = append(errs, fmt.Errorf("image_name can't include spaces"))
 	}
-
+	if c.AlicloudTargetImageFamily != "" {
+		if strings.HasPrefix(c.AlicloudTargetImageFamily, "http://") ||
+			strings.HasPrefix(c.AlicloudTargetImageFamily, "https://") ||
+			strings.HasPrefix(c.AlicloudTargetImageFamily, "acs:") ||
+			strings.HasPrefix(c.AlicloudTargetImageFamily, "aliyun") {
+			errs = append(errs, fmt.Errorf("target_image_family can't start with 'aliyun', 'acs:', 'http://' or 'https://'"))
+		} else {
+			imageFamilyReg := regexp.MustCompile(`^\p{L}[\p{L}_0-9\-\.\:]{1,127}$`)
+			if !imageFamilyReg.MatchString(c.AlicloudTargetImageFamily) {
+				errs = append(errs, fmt.Errorf("target_image_family should be [2, 128] English or Chinese characters. It must begin with an uppercase/lowercase letter or a Chinese character, and may contain numbers, '_' or '-'"))
+			}
+		}
+	}
+	if c.AlicloudBootMode != "" {
+		if c.AlicloudBootMode != "BIOS" && c.AlicloudBootMode != "UEFI" && c.AlicloudBootMode != "UEFI-Preferred" {
+			errs = append(errs, fmt.Errorf("boot_mode should to be one of 'BIOS', 'UEFI' or 'UEFI-Preferred'"))
+		}
+	}
 	if len(c.AlicloudImageDestinationRegions) > 0 {
 		regionSet := make(map[string]struct{})
 		regions := make([]string, 0, len(c.AlicloudImageDestinationRegions))
