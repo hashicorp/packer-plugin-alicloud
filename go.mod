@@ -1,6 +1,6 @@
 module github.com/hashicorp/packer-plugin-alicloud
 
-go 1.19
+go 1.21.0
 
 require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.62.742
