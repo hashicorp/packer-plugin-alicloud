@@ -188,6 +188,7 @@ func (c *AlicloudAccessConfig) getSupportedRegions() ([]string, error) {
 	}
 
 	regionsRequest := ecs.CreateDescribeRegionsRequest()
+	regionsRequest.Scheme = "HTTPS"
 	regionsResponse, err := client.DescribeRegions(regionsRequest)
 	if err != nil {
 		return nil, err
