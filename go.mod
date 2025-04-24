@@ -3,7 +3,7 @@ module github.com/hashicorp/packer-plugin-alicloud
 go 1.21.0
 
 require (
-	github.com/aliyun/alibaba-cloud-sdk-go v1.62.742
+	github.com/aliyun/alibaba-cloud-sdk-go v1.63.94
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.8+incompatible
 	github.com/hashicorp/hcl/v2 v2.19.1
 	github.com/hashicorp/packer-plugin-sdk v0.6.0
