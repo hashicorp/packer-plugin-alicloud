@@ -87,6 +87,7 @@ type FlatConfig struct {
 	ECSImagesDiskMappings             []FlatAlicloudDiskDevice `mapstructure:"image_disk_mappings" required:"false" cty:"image_disk_mappings" hcl:"image_disk_mappings"`
 	AlicloudTargetImageFamily         *string                  `mapstructure:"target_image_family" required:"false" cty:"target_image_family" hcl:"target_image_family"`
 	AlicloudBootMode                  *string                  `mapstructure:"boot_mode" required:"false" cty:"boot_mode" hcl:"boot_mode"`
+	Protocol                          *string                  `mapstructure:"protocol" required:"false" cty:"protocol" hcl:"protocol"`
 	AssociatePublicIpAddress          *bool                    `mapstructure:"associate_public_ip_address" cty:"associate_public_ip_address" hcl:"associate_public_ip_address"`
 	ZoneId                            *string                  `mapstructure:"zone_id" required:"false" cty:"zone_id" hcl:"zone_id"`
 	IOOptimized                       *bool                    `mapstructure:"io_optimized" required:"false" cty:"io_optimized" hcl:"io_optimized"`
@@ -218,6 +219,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"image_disk_mappings":              &hcldec.BlockListSpec{TypeName: "image_disk_mappings", Nested: hcldec.ObjectSpec((*FlatAlicloudDiskDevice)(nil).HCL2Spec())},
 		"target_image_family":              &hcldec.AttrSpec{Name: "target_image_family", Type: cty.String, Required: false},
 		"boot_mode":                        &hcldec.AttrSpec{Name: "boot_mode", Type: cty.String, Required: false},
+		"protocol":                         &hcldec.AttrSpec{Name: "protocol", Type: cty.String, Required: false},
 		"associate_public_ip_address":      &hcldec.AttrSpec{Name: "associate_public_ip_address", Type: cty.Bool, Required: false},
 		"zone_id":                          &hcldec.AttrSpec{Name: "zone_id", Type: cty.String, Required: false},
 		"io_optimized":                     &hcldec.AttrSpec{Name: "io_optimized", Type: cty.Bool, Required: false},

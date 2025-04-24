@@ -65,5 +65,10 @@ func TestAlicloudAccessConfigPrepareRegion(t *testing.T) {
 		t.Fatalf("shouldn't have err: %s", err)
 	}
 
+	c.Protocol = "http"
+	if err := c.Prepare(nil); err != nil {
+		t.Fatalf("shouldn't have err: %s", err)
+	}
+
 	c.AlicloudSkipValidation = false
 }

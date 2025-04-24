@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/endpoints"
@@ -55,6 +56,9 @@ type AlicloudAccessConfig struct {
 	// This option is useful if you use a cloud provider whose API is
 	// compatible with aliyun ECS. Specify another endpoint with this option.
 	CustomEndpointEcs string `mapstructure:"custom_endpoint_ecs" required:"false"`
+	// The protocol used to communicate with aliyun ECS.
+	// Valid values are `http` and `https`.
+	Protocol string `mapstructure:"protocol" required:"false"`
 
 	client *ClientWrapper
 }
@@ -119,6 +123,11 @@ func (c *AlicloudAccessConfig) Client() (*ClientWrapper, error) {
 
 	client.AppendUserAgent(Packer, version.PluginVersion.FormattedVersion())
 	client.SetReadTimeout(DefaultRequestReadTimeout)
+	if c.Protocol != "" {
+		if isHTTPOrHTTPS(c.Protocol) {
+			client.GetConfig().WithScheme(strings.ToUpper(c.Protocol))
+		}
+	}
 	c.client = &ClientWrapper{client}
 
 	return c.client, nil
@@ -136,6 +145,10 @@ func (c *AlicloudAccessConfig) Prepare(ctx *interpolate.Context) []error {
 
 	if c.AlicloudRegion == "" {
 		errs = append(errs, fmt.Errorf("region option or ALICLOUD_REGION must be provided in template file or environment variables."))
+	}
+
+	if c.Protocol != "" && !isHTTPOrHTTPS(c.Protocol) {
+		errs = append(errs, fmt.Errorf("The template file must provide the correct protocol format, either http or https."))
 	}
 
 	if len(errs) > 0 {
@@ -262,4 +275,7 @@ func getConfigFromProfile(c *AlicloudAccessConfig, ProfileKey string) (interface
 		}
 	}
 	return providerConfig[ProfileKey], nil
+}
+func isHTTPOrHTTPS(str string) bool {
+	return strings.EqualFold(str, "http") || strings.EqualFold(str, "https")
 }
