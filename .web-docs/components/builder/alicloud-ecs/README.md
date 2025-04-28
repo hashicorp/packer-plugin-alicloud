@@ -308,6 +308,10 @@ builder.
 
 - `boot_mode` (string) - The boot mode of the user-defined image, it should to be one of 'BIOS', 'UEFI' or 'UEFI-Preferred'.
 
+- `kms_key_copy_ids` ([]string) - Copy to the destination KMS key ID array
+
+- `kms_key_id` (string) - The source image KMS key ID used to encrypt the disk.
+
 <!-- End of code generated from the comments of the AlicloudImageConfig struct in builder/ecs/image_config.go; -->
 
 
