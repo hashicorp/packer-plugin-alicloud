@@ -20,6 +20,7 @@ import (
 type stepCreateAlicloudImage struct {
 	AlicloudImageIgnoreDataDisks bool
 	WaitSnapshotReadyTimeout     int
+	Tags                         map[string]string
 	image                        *ecs.Image
 }
 
@@ -144,6 +145,17 @@ func (s *stepCreateAlicloudImage) buildCreateImageRequest(state multistep.StateB
 	} else {
 		instance := state.Get("instance").(*ecs.Instance)
 		request.InstanceId = instance.InstanceId
+	}
+
+	if len(s.Tags) != 0 {
+		var tags []ecs.CreateImageTag
+		for key, value := range s.Tags {
+			var tag ecs.CreateImageTag
+			tag.Key = key
+			tag.Value = value
+			tags = append(tags, tag)
+		}
+		request.Tag = &tags
 	}
 
 	return request
