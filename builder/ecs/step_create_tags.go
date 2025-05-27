@@ -20,14 +20,11 @@ func (s *stepCreateTags) Run(ctx context.Context, state multistep.StateBag) mult
 	config := state.Get("config").(*Config)
 	client := state.Get("client").(*ClientWrapper)
 	ui := state.Get("ui").(packersdk.Ui)
-	imageId := state.Get("alicloudimage").(string)
 	snapshotIds := state.Get("alicloudsnapshots").([]string)
 
 	if len(s.Tags) == 0 {
 		return multistep.ActionContinue
 	}
-
-	ui.Say(fmt.Sprintf("Adding tags(%s) to image: %s", s.Tags, imageId))
 
 	var tags []ecs.AddTagsTag
 	for key, value := range s.Tags {
@@ -35,16 +32,6 @@ func (s *stepCreateTags) Run(ctx context.Context, state multistep.StateBag) mult
 		tag.Key = key
 		tag.Value = value
 		tags = append(tags, tag)
-	}
-
-	addTagsRequest := ecs.CreateAddTagsRequest()
-	addTagsRequest.RegionId = config.AlicloudRegion
-	addTagsRequest.ResourceId = imageId
-	addTagsRequest.ResourceType = TagResourceImage
-	addTagsRequest.Tag = &tags
-
-	if _, err := client.AddTags(addTagsRequest); err != nil {
-		return halt(state, err, "Error Adding tags to image")
 	}
 
 	for _, snapshotId := range snapshotIds {
