@@ -6,9 +6,9 @@ package ecs
 import (
 	"context"
 	"fmt"
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"time"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -25,27 +25,43 @@ type stepRegionCopyAlicloudImage struct {
 func (s *stepRegionCopyAlicloudImage) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	config := state.Get("config").(*Config)
 
-	if config.ImageEncrypted != confighelper.TriUnset {
-		s.AlicloudImageDestinationRegions = append(s.AlicloudImageDestinationRegions, s.RegionId)
-		s.AlicloudImageDestinationNames = append(s.AlicloudImageDestinationNames, config.AlicloudImageName)
-	}
-
-	if len(s.AlicloudImageDestinationRegions) == 0 {
-		return multistep.ActionContinue
-	}
-
 	client := state.Get("client").(*ClientWrapper)
 	ui := state.Get("ui").(packersdk.Ui)
 
 	srcImageId := state.Get("alicloudimage").(string)
 	alicloudImages := state.Get("alicloudimages").(map[string]string)
+
+	isEncrypted := false
+	describeImagesRequest := ecs.CreateDescribeImagesRequest()
+	describeImagesRequest.RegionId = s.RegionId
+	describeImagesRequest.ImageId = srcImageId
+	imageResponse, _ := client.DescribeImages(describeImagesRequest)
+	images := imageResponse.Images.Image
+	if len(images) > 0 {
+		firstImage := images[0]
+		mappings := firstImage.DiskDeviceMappings
+		for _, item := range mappings.DiskDeviceMapping {
+			if item.Encrypted {
+				isEncrypted = true
+				break
+			}
+		}
+	}
+
+	if !isEncrypted {
+		if config.ImageEncrypted == confighelper.TriTrue {
+			s.AlicloudImageDestinationRegions = append(s.AlicloudImageDestinationRegions, s.RegionId)
+			s.AlicloudImageDestinationNames = append(s.AlicloudImageDestinationNames, config.AlicloudImageName)
+		}
+	}
+
 	numberOfName := len(s.AlicloudImageDestinationNames)
+	if len(s.AlicloudImageDestinationRegions) == 0 {
+		return multistep.ActionContinue
+	}
 
 	ui.Say(fmt.Sprintf("Coping image %s from %s...", srcImageId, s.RegionId))
 	for index, destinationRegion := range s.AlicloudImageDestinationRegions {
-		if destinationRegion == s.RegionId && config.ImageEncrypted == confighelper.TriUnset {
-			continue
-		}
 
 		ecsImageName := ""
 		if numberOfName > 0 && index < numberOfName {
@@ -60,6 +76,8 @@ func (s *stepRegionCopyAlicloudImage) Run(ctx context.Context, state multistep.S
 		copyImageRequest.ResourceGroupId = config.AlicloudResourceGroupId
 		if config.ImageEncrypted != confighelper.TriUnset {
 			copyImageRequest.Encrypted = requests.NewBoolean(config.ImageEncrypted.True())
+		} else {
+			copyImageRequest.Encrypted = requests.NewBoolean(isEncrypted)
 		}
 
 		imageResponse, err := client.CopyImage(copyImageRequest)
