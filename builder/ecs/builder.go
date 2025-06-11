@@ -219,6 +219,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 			&stepRegionCopyAlicloudImage{
 				AlicloudImageDestinationRegions: b.config.AlicloudImageDestinationRegions,
 				AlicloudImageDestinationNames:   b.config.AlicloudImageDestinationNames,
+				KmsKeyIds:                       b.config.AlicloudKMSKeyCopyIds,
 				RegionId:                        b.config.AlicloudRegion,
 				WaitCopyingImageReadyTimeout:    b.getCopyingImageReadyTimeout(),
 			},
