@@ -62,11 +62,6 @@ func (s *stepPreValidate) validateDestImageName(state multistep.StateBag) error 
 	client := state.Get("client").(*ClientWrapper)
 	config := state.Get("config").(*Config)
 
-	if s.ForceDelete {
-		ui.Say("Force delete flag found, skipping prevalidating image name.")
-		return nil
-	}
-
 	ui.Say("Prevalidating image name...")
 
 	describeImagesRequest := ecs.CreateDescribeImagesRequest()
@@ -81,6 +76,17 @@ func (s *stepPreValidate) validateDestImageName(state multistep.StateBag) error 
 
 	images := imagesResponse.Images.Image
 	if len(images) > 0 {
+		if s.ForceDelete {
+			ui.Say(fmt.Sprintf("Force delete flag found, deleting existing image: %s", images[0].ImageId))
+			deleteImageRequest := ecs.CreateDeleteImageRequest()
+			deleteImageRequest.RegionId = config.AlicloudRegion
+			deleteImageRequest.ImageId = images[0].ImageId
+			deleteImageRequest.Force = "true"
+			if _, err := client.DeleteImage(deleteImageRequest); err != nil {
+				return fmt.Errorf("Failed to delete image: %s", err)
+			}
+			return nil
+		}
 		return fmt.Errorf("Error: Image Name: '%s' is used by an existing alicloud image: %s", images[0].ImageName, images[0].ImageId)
 	}
 

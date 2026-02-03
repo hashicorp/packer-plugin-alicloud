@@ -149,6 +149,11 @@ func (s *stepCreateAlicloudInstance) buildCreateInstanceRequest(state multistep.
 	securityGroupId := state.Get("securitygroupid").(string)
 	request.SecurityGroupId = securityGroupId
 
+	config := state.Get("config").(*Config)
+	if config.Comm.SSHUsername == "ecs-user" {
+		request.ImageOptions.LoginAsNonRoot = "true"
+	}
+
 	networkType := state.Get("networktype").(InstanceNetWork)
 	if networkType == InstanceNetworkVpc {
 		vswitchId := state.Get("vswitchid").(string)
@@ -178,7 +183,6 @@ func (s *stepCreateAlicloudInstance) buildCreateInstanceRequest(state multistep.
 		request.IoOptimized = IOOptimizedNone
 	}
 
-	config := state.Get("config").(*Config)
 	password := config.Comm.SSHPassword
 	if password == "" && config.Comm.WinRMPassword != "" {
 		password = config.Comm.WinRMPassword

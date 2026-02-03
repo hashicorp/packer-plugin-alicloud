@@ -35,6 +35,7 @@ func (s *stepConfigAlicloudEIP) Run(ctx context.Context, state multistep.StateBa
 	client := state.Get("client").(*ClientWrapper)
 	ui := state.Get("ui").(packersdk.Ui)
 	instance := state.Get("instance").(*ecs.Instance)
+	config := state.Get("config").(*Config)
 
 	var ipaddress string
 	var allocateId string
@@ -104,6 +105,18 @@ func (s *stepConfigAlicloudEIP) Run(ctx context.Context, state multistep.StateBa
 		err = s.waitForEipStatus(client, instance.RegionId, s.allocatedId, EipStatusInUse)
 		if err != nil {
 			return halt(state, err, "Error wait EIP associating timeout")
+		}
+
+		// Modify instance password if ssh_password is set
+		if config.Comm.SSHPassword != "" {
+			ui.Say("Modifying instance password...")
+			modifyInstanceAttributeRequest := ecs.CreateModifyInstanceAttributeRequest()
+			modifyInstanceAttributeRequest.InstanceId = instance.InstanceId
+			modifyInstanceAttributeRequest.Password = config.Comm.SSHPassword
+			if _, err := client.ModifyInstanceAttribute(modifyInstanceAttributeRequest); err != nil {
+				return halt(state, err, "Error modifying instance password")
+			}
+			ui.Message("Instance password modified successfully")
 		}
 	}
 
