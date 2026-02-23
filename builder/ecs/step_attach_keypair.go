@@ -33,6 +33,13 @@ func (s *stepAttachKeyPair) Run(ctx context.Context, state multistep.StateBag) m
 		return multistep.ActionContinue
 	}
 
+	// Check if KeyPair is already attached (e.g., via RunInstances API in stepCreateAlicloudInstance)
+	// This avoids redundant API calls and potential errors when the keypair is already attached.
+	if instance.KeyPairName == keyPairName {
+		ui.Message(fmt.Sprintf("KeyPair %s already attached to instance: %s", keyPairName, instance.InstanceId))
+		return multistep.ActionContinue
+	}
+
 	_, err := client.WaitForExpected(&WaitForExpectArgs{
 		RequestFunc: func() (responses.AcsResponse, error) {
 			request := ecs.CreateAttachKeyPairRequest()

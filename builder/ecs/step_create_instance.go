@@ -179,6 +179,16 @@ func (s *stepCreateAlicloudInstance) buildCreateInstanceRequest(state multistep.
 	}
 
 	config := state.Get("config").(*Config)
+
+	// Pass KeyPairName in RunInstances request so the SSH public key is
+	// available in the metadata service before the instance boots.
+	// This ensures cloud-init can install the SSH key on first boot.
+	// Without this, the keypair would only be attached after the instance
+	// is already running, and cloud-init would miss it.
+	if config.Comm.SSHKeyPairName != "" {
+		request.KeyPairName = config.Comm.SSHKeyPairName
+	}
+
 	password := config.Comm.SSHPassword
 	if password == "" && config.Comm.WinRMPassword != "" {
 		password = config.Comm.WinRMPassword
