@@ -19,6 +19,7 @@ type FlatAlicloudDiskDevice struct {
 	DeleteWithInstance *bool   `mapstructure:"disk_delete_with_instance" required:"false" cty:"disk_delete_with_instance" hcl:"disk_delete_with_instance"`
 	Device             *string `mapstructure:"disk_device" required:"false" cty:"disk_device" hcl:"disk_device"`
 	Encrypted          *bool   `mapstructure:"disk_encrypted" required:"false" cty:"disk_encrypted" hcl:"disk_encrypted"`
+	KMSKeyId           *string `mapstructure:"disk_kms_key_id" required:"false" cty:"disk_kms_key_id" hcl:"disk_kms_key_id"`
 }
 
 // FlatMapstructure returns a new FlatAlicloudDiskDevice.
@@ -41,6 +42,7 @@ func (*FlatAlicloudDiskDevice) HCL2Spec() map[string]hcldec.Spec {
 		"disk_delete_with_instance": &hcldec.AttrSpec{Name: "disk_delete_with_instance", Type: cty.Bool, Required: false},
 		"disk_device":               &hcldec.AttrSpec{Name: "disk_device", Type: cty.String, Required: false},
 		"disk_encrypted":            &hcldec.AttrSpec{Name: "disk_encrypted", Type: cty.Bool, Required: false},
+		"disk_kms_key_id":           &hcldec.AttrSpec{Name: "disk_kms_key_id", Type: cty.String, Required: false},
 	}
 	return s
 }
@@ -78,6 +80,8 @@ type FlatConfig struct {
 	AlicloudImageDestinationRegions   []string                 `mapstructure:"image_copy_regions" required:"false" cty:"image_copy_regions" hcl:"image_copy_regions"`
 	AlicloudImageDestinationNames     []string                 `mapstructure:"image_copy_names" required:"false" cty:"image_copy_names" hcl:"image_copy_names"`
 	ImageEncrypted                    *bool                    `mapstructure:"image_encrypted" required:"false" cty:"image_encrypted" hcl:"image_encrypted"`
+	ImageCopyKMSKeyIds                []string                 `mapstructure:"image_copy_kms_ids" required:"false" cty:"image_copy_kms_ids" hcl:"image_copy_kms_ids"`
+	KMSKeyId                          *string                  `mapstructure:"kms_key_id" required:"false" cty:"kms_key_id" hcl:"kms_key_id"`
 	AlicloudImageForceDelete          *bool                    `mapstructure:"image_force_delete" required:"false" cty:"image_force_delete" hcl:"image_force_delete"`
 	AlicloudImageForceDeleteSnapshots *bool                    `mapstructure:"image_force_delete_snapshots" required:"false" cty:"image_force_delete_snapshots" hcl:"image_force_delete_snapshots"`
 	AlicloudImageForceDeleteInstances *bool                    `mapstructure:"image_force_delete_instances" cty:"image_force_delete_instances" hcl:"image_force_delete_instances"`
@@ -211,6 +215,8 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"image_copy_regions":               &hcldec.AttrSpec{Name: "image_copy_regions", Type: cty.List(cty.String), Required: false},
 		"image_copy_names":                 &hcldec.AttrSpec{Name: "image_copy_names", Type: cty.List(cty.String), Required: false},
 		"image_encrypted":                  &hcldec.AttrSpec{Name: "image_encrypted", Type: cty.Bool, Required: false},
+		"image_copy_kms_ids":               &hcldec.AttrSpec{Name: "image_copy_kms_ids", Type: cty.List(cty.String), Required: false},
+		"kms_key_id":                       &hcldec.AttrSpec{Name: "kms_key_id", Type: cty.String, Required: false},
 		"image_force_delete":               &hcldec.AttrSpec{Name: "image_force_delete", Type: cty.Bool, Required: false},
 		"image_force_delete_snapshots":     &hcldec.AttrSpec{Name: "image_force_delete_snapshots", Type: cty.Bool, Required: false},
 		"image_force_delete_instances":     &hcldec.AttrSpec{Name: "image_force_delete_instances", Type: cty.Bool, Required: false},

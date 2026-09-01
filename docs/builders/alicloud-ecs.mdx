@@ -120,6 +120,11 @@ The following policy document provides the minimal set permissions necessary for
 
 @include 'builder/ecs/AlicloudDiskDevice-not-required.mdx'
 
+~> **Note on disk encryption:** `disk_encrypted` can be set independently on
+`system_disk_mapping` or on individual entries in `image_disk_mappings`.
+ When `disk_kms_key_id` is omitted, the default
+service KMS key is used.
+
 ## Basic Example
 
 Here is a basic example for Alicloud.

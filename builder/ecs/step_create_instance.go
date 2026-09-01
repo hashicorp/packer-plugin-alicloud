@@ -50,14 +50,14 @@ func (s *stepCreateAlicloudInstance) Run(ctx context.Context, state multistep.St
 	ui := state.Get("ui").(packersdk.Ui)
 
 	ui.Say("Creating instance...")
-	createInstanceRequest, err := s.buildCreateInstanceRequest(state)
+	runInstancesRequest, err := s.buildRunInstancesRequest(state)
 	if err != nil {
 		return halt(state, err, "")
 	}
 
-	createInstanceResponse, err := client.WaitForExpected(&WaitForExpectArgs{
+	runInstancesResponse, err := client.WaitForExpected(&WaitForExpectArgs{
 		RequestFunc: func() (responses.AcsResponse, error) {
-			return client.CreateInstance(createInstanceRequest)
+			return client.RunInstances(runInstancesRequest)
 		},
 		EvalFunc: client.EvalCouldRetryResponse(createInstanceRetryErrors, EvalRetryErrorType),
 	})
@@ -66,11 +66,15 @@ func (s *stepCreateAlicloudInstance) Run(ctx context.Context, state multistep.St
 		return halt(state, err, "Error creating instance")
 	}
 
-	instanceId := createInstanceResponse.(*ecs.CreateInstanceResponse).InstanceId
+	instanceIdSets := runInstancesResponse.(*ecs.RunInstancesResponse).InstanceIdSets.InstanceIdSet
+	if len(instanceIdSets) == 0 {
+		return halt(state, fmt.Errorf("RunInstances returned no instance id"), "Error creating instance")
+	}
+	instanceId := instanceIdSets[0]
 
-	_, err = client.WaitForInstanceStatus(s.RegionId, instanceId, InstanceStatusStopped)
+	_, err = client.WaitForInstanceStatus(s.RegionId, instanceId, InstanceStatusRunning)
 	if err != nil {
-		return halt(state, err, "Error waiting create instance")
+		return halt(state, err, "Error waiting for instance to run")
 	}
 
 	describeInstancesRequest := ecs.CreateDescribeInstancesRequest()
@@ -115,16 +119,18 @@ func (s *stepCreateAlicloudInstance) Cleanup(state multistep.StateBag) {
 	}
 }
 
-func (s *stepCreateAlicloudInstance) buildCreateInstanceRequest(state multistep.StateBag) (*ecs.CreateInstanceRequest, error) {
-	request := ecs.CreateCreateInstanceRequest()
+func (s *stepCreateAlicloudInstance) buildRunInstancesRequest(state multistep.StateBag) (*ecs.RunInstancesRequest, error) {
+	request := ecs.CreateRunInstancesRequest()
 	request.ClientToken = uuid.TimeOrderedUUID()
 	request.RegionId = s.RegionId
 	request.InstanceType = s.InstanceType
 	request.InstanceName = s.InstanceName
 	request.RamRoleName = s.RamRoleName
-	request.Tag = buildCreateInstanceTags(s.Tags)
+	request.Tag = buildRunInstancesTags(s.Tags)
 	request.ZoneId = s.ZoneId
 	request.SecurityEnhancementStrategy = s.SecurityEnhancementStrategy
+	request.Amount = requests.NewInteger(1)
+	request.MinAmount = requests.NewInteger(1)
 	if s.AlicloudImageFamily != "" {
 		request.ImageFamily = s.AlicloudImageFamily
 	} else {
@@ -170,25 +176,43 @@ func (s *stepCreateAlicloudInstance) buildCreateInstanceRequest(state multistep.
 	}
 	request.Password = password
 
+	// RunInstances attaches the key pair at creation time, so no separate
+	// attach step is required.
+	if config.Comm.SSHKeyPairName != "" {
+		request.KeyPairName = config.Comm.SSHKeyPairName
+	} else if config.Comm.SSHTemporaryKeyPairName != "" {
+		request.KeyPairName = config.Comm.SSHTemporaryKeyPairName
+	}
+
 	systemDisk := config.AlicloudImageConfig.ECSSystemDiskMapping
 	request.SystemDiskDiskName = systemDisk.DiskName
 	request.SystemDiskCategory = systemDisk.DiskCategory
-	request.SystemDiskSize = requests.Integer(convertNumber(systemDisk.DiskSize))
+	request.SystemDiskSize = convertNumber(systemDisk.DiskSize)
 	request.SystemDiskDescription = systemDisk.Description
+	if systemDisk.Encrypted.True() {
+		request.SystemDisk.Encrypted = "true"
+		if systemDisk.KMSKeyId != "" {
+			request.SystemDisk.KMSKeyId = systemDisk.KMSKeyId
+		}
+	}
 
 	imageDisks := config.AlicloudImageConfig.ECSImagesDiskMappings
-	var dataDisks []ecs.CreateInstanceDataDisk
+	var dataDisks []ecs.RunInstancesDataDisk
 	for _, imageDisk := range imageDisks {
-		var dataDisk ecs.CreateInstanceDataDisk
-		dataDisk.DiskName = imageDisk.DiskName
-		dataDisk.Category = imageDisk.DiskCategory
-		dataDisk.Size = convertNumber(imageDisk.DiskSize)
-		dataDisk.SnapshotId = imageDisk.SnapshotId
-		dataDisk.Description = imageDisk.Description
-		dataDisk.DeleteWithInstance = strconv.FormatBool(imageDisk.DeleteWithInstance)
-		dataDisk.Device = imageDisk.Device
-		if imageDisk.Encrypted != confighelper.TriUnset {
-			dataDisk.Encrypted = strconv.FormatBool(imageDisk.Encrypted.True())
+		dataDisk := ecs.RunInstancesDataDisk{
+			DiskName:           imageDisk.DiskName,
+			Category:           imageDisk.DiskCategory,
+			Size:               convertNumber(imageDisk.DiskSize),
+			SnapshotId:         imageDisk.SnapshotId,
+			Description:        imageDisk.Description,
+			DeleteWithInstance: strconv.FormatBool(imageDisk.DeleteWithInstance),
+			Device:             imageDisk.Device,
+		}
+		if imageDisk.Encrypted.True() {
+			dataDisk.Encrypted = "true"
+			if imageDisk.KMSKeyId != "" {
+				dataDisk.KMSKeyId = imageDisk.KMSKeyId
+			}
 		}
 
 		dataDisks = append(dataDisks, dataDisk)
@@ -218,11 +242,11 @@ func (s *stepCreateAlicloudInstance) getUserData(state multistep.StateBag) (stri
 
 }
 
-func buildCreateInstanceTags(tags map[string]string) *[]ecs.CreateInstanceTag {
-	var ecsTags []ecs.CreateInstanceTag
+func buildRunInstancesTags(tags map[string]string) *[]ecs.RunInstancesTag {
+	var ecsTags []ecs.RunInstancesTag
 
 	for k, v := range tags {
-		ecsTags = append(ecsTags, ecs.CreateInstanceTag{Key: k, Value: v})
+		ecsTags = append(ecsTags, ecs.RunInstancesTag{Key: k, Value: v})
 	}
 
 	return &ecsTags

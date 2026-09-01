@@ -274,7 +274,20 @@ builder.
   true, a temporary image will be created from the provisioned instance in
   the main region and an encrypted copy will be generated in the same
   region. By default, Packer will keep the encryption setting to what it
-  was in the source image.
+  was in the source image. This option only affects the CopyImage
+  orchestration and does not influence instance-time disk encryption.
+
+- `image_copy_kms_ids` ([]string) - The KMS key IDs used to encrypt the target images when copying images
+  to other regions. This option only affects the CopyImage orchestration.
+  This option requires image_encrypted to be set to true. The KMS key IDs
+  correspond by index to image_copy_regions; an empty string or missing
+  entry means the default service KMS key is used for that region.
+
+- `kms_key_id` (string) - The KMS key ID used to encrypt the target image when copying the image
+  within the same region. This option only affects the CopyImage
+  orchestration. This option requires image_encrypted to be set to true.
+  If this option is left empty, the default service KMS key is used when
+  image encryption is enabled.
 
 - `image_force_delete` (bool) - If this value is true, when the target image names including those
   copied are duplicated with existing images, it will delete the existing
@@ -468,16 +481,25 @@ The following policy document provides the minimal set permissions necessary for
 - `disk_device` (string) - Device information of the related instance:
   such as /dev/xvdb It is null unless the Status is In_use.
 
-- `disk_encrypted` (boolean) - Whether or not to encrypt the data disk.
-  If this option is set to true, the data disk will be encryped and
-  corresponding snapshot in the target image will also be encrypted. By
-  default, if this is an extra data disk, Packer will not encrypt the
-  data disk. Otherwise, Packer will keep the encryption setting to what
-  it was in the source image. Please refer to Introduction of ECS disk
-  encryption for more details.
+- `disk_encrypted` (boolean) - Whether or not to encrypt the disk.
+  If this option is set to true on the system disk mapping, the system
+  disk will be encrypted; if set to true on a data disk mapping, that data
+  disk will be encrypted. The corresponding snapshots in the target image
+  will also be encrypted. By default, Packer will keep the encryption
+  setting to what it was in the source image. Please refer to Introduction
+  of ECS disk encryption for more details.
+
+- `disk_kms_key_id` (string) - The ID of the KMS key used to encrypt the disk. This option is only
+  valid when disk_encrypted is set to true. If this option is left empty,
+  the default service KMS key is used when disk encryption is enabled.
 
 <!-- End of code generated from the comments of the AlicloudDiskDevice struct in builder/ecs/image_config.go; -->
 
+
+~> **Note on disk encryption:** `disk_encrypted` can be set independently on
+`system_disk_mapping` or on individual entries in `image_disk_mappings`.
+ When `disk_kms_key_id` is omitted, the default
+service KMS key is used.
 
 ## Basic Example
 

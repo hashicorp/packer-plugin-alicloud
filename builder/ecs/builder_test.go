@@ -160,6 +160,94 @@ func TestBuilderPrepare_Devices(t *testing.T) {
 	}
 }
 
+func TestBuilderPrepare_DevicesEncrypted(t *testing.T) {
+	var b Builder
+	config := testBuilderConfig()
+	config["system_disk_mapping"] = map[string]interface{}{
+		"disk_encrypted":  true,
+		"disk_kms_key_id": "shared-kms-key",
+	}
+	config["image_disk_mappings"] = []map[string]interface{}{
+		{
+			"disk_name":       "data_disk1",
+			"disk_size":       100,
+			"disk_encrypted":  true,
+			"disk_kms_key_id": "shared-kms-key",
+		},
+	}
+	_, warnings, err := b.Prepare(config)
+	if len(warnings) > 0 {
+		t.Fatalf("bad: %#v", warnings)
+	}
+	if err != nil {
+		t.Fatalf("should not have error: %s", err)
+	}
+
+	expectedSystem := AlicloudDiskDevice{
+		Encrypted: helperconfig.TriTrue,
+		KMSKeyId:  "shared-kms-key",
+	}
+	if !reflect.DeepEqual(b.config.ECSSystemDiskMapping, expectedSystem) {
+		t.Fatalf("system disk encryption is not set properly, actual: %v; expected: %v", b.config.ECSSystemDiskMapping, expectedSystem)
+	}
+
+	expectedData := []AlicloudDiskDevice{
+		{
+			DiskName:  "data_disk1",
+			DiskSize:  100,
+			Encrypted: helperconfig.TriTrue,
+			KMSKeyId:  "shared-kms-key",
+		},
+	}
+	if !reflect.DeepEqual(b.config.ECSImagesDiskMappings, expectedData) {
+		t.Fatalf("data disk encryption is not set properly, actual: %v; expected: %v", b.config.ECSImagesDiskMappings, expectedData)
+	}
+}
+
+func TestBuilderPrepare_DevicesEncryptedDifferentKMSKeyIds(t *testing.T) {
+	var b Builder
+	config := testBuilderConfig()
+	config["system_disk_mapping"] = map[string]interface{}{
+		"disk_encrypted":  true,
+		"disk_kms_key_id": "system-kms-key",
+	}
+	config["image_disk_mappings"] = []map[string]interface{}{
+		{
+			"disk_name":       "data_disk1",
+			"disk_size":       100,
+			"disk_encrypted":  true,
+			"disk_kms_key_id": "data-kms-key",
+		},
+	}
+	_, warnings, err := b.Prepare(config)
+	if len(warnings) > 0 {
+		t.Fatalf("bad: %#v", warnings)
+	}
+	if err != nil {
+		t.Fatalf("should not have error when encrypted disks use different disk_kms_key_id values: %s", err)
+	}
+
+	expectedSystem := AlicloudDiskDevice{
+		Encrypted: helperconfig.TriTrue,
+		KMSKeyId:  "system-kms-key",
+	}
+	if !reflect.DeepEqual(b.config.ECSSystemDiskMapping, expectedSystem) {
+		t.Fatalf("system disk encryption is not set properly, actual: %v; expected: %v", b.config.ECSSystemDiskMapping, expectedSystem)
+	}
+
+	expectedData := []AlicloudDiskDevice{
+		{
+			DiskName:  "data_disk1",
+			DiskSize:  100,
+			Encrypted: helperconfig.TriTrue,
+			KMSKeyId:  "data-kms-key",
+		},
+	}
+	if !reflect.DeepEqual(b.config.ECSImagesDiskMappings, expectedData) {
+		t.Fatalf("data disk encryption is not set properly, actual: %v; expected: %v", b.config.ECSImagesDiskMappings, expectedData)
+	}
+}
+
 func TestBuilderPrepare_IgnoreDataDisks(t *testing.T) {
 	var b Builder
 	config := testBuilderConfig()

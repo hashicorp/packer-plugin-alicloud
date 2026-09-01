@@ -221,6 +221,9 @@ func (c *ClientWrapper) WaitForInstanceStatus(regionId string, instanceId string
 					return WaitForExpectSuccess
 				}
 			}
+			if len(instances) == 0 {
+				return WaitForExpectFailToStop
+			}
 			return WaitForExpectToRetry
 		},
 		RetryTimes: mediumRetryTimes,

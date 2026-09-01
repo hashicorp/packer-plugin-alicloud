@@ -49,14 +49,18 @@ type AlicloudDiskDevice struct {
 	// Device information of the related instance:
 	// such as /dev/xvdb It is null unless the Status is In_use.
 	Device string `mapstructure:"disk_device" required:"false"`
-	// Whether or not to encrypt the data disk.
-	// If this option is set to true, the data disk will be encryped and
-	// corresponding snapshot in the target image will also be encrypted. By
-	// default, if this is an extra data disk, Packer will not encrypt the
-	// data disk. Otherwise, Packer will keep the encryption setting to what
-	// it was in the source image. Please refer to Introduction of ECS disk
-	// encryption for more details.
+	// Whether or not to encrypt the disk.
+	// If this option is set to true on the system disk mapping, the system
+	// disk will be encrypted; if set to true on a data disk mapping, that data
+	// disk will be encrypted. The corresponding snapshots in the target image
+	// will also be encrypted. By default, Packer will keep the encryption
+	// setting to what it was in the source image. Please refer to Introduction
+	// of ECS disk encryption for more details.
 	Encrypted config.Trilean `mapstructure:"disk_encrypted" required:"false"`
+	// The ID of the KMS key used to encrypt the disk. This option is only
+	// valid when disk_encrypted is set to true. If this option is left empty,
+	// the default service KMS key is used when disk encryption is enabled.
+	KMSKeyId string `mapstructure:"disk_kms_key_id" required:"false"`
 }
 
 // The "AlicloudDiskDevices" object is used to define disk mappings for your
@@ -131,8 +135,21 @@ type AlicloudImageConfig struct {
 	// true, a temporary image will be created from the provisioned instance in
 	// the main region and an encrypted copy will be generated in the same
 	// region. By default, Packer will keep the encryption setting to what it
-	// was in the source image.
+	// was in the source image. This option only affects the CopyImage
+	// orchestration and does not influence instance-time disk encryption.
 	ImageEncrypted config.Trilean `mapstructure:"image_encrypted" required:"false"`
+	// The KMS key IDs used to encrypt the target images when copying images
+	// to other regions. This option only affects the CopyImage orchestration.
+	// This option requires image_encrypted to be set to true. The KMS key IDs
+	// correspond by index to image_copy_regions; an empty string or missing
+	// entry means the default service KMS key is used for that region.
+	ImageCopyKMSKeyIds []string `mapstructure:"image_copy_kms_ids" required:"false"`
+	// The KMS key ID used to encrypt the target image when copying the image
+	// within the same region. This option only affects the CopyImage
+	// orchestration. This option requires image_encrypted to be set to true.
+	// If this option is left empty, the default service KMS key is used when
+	// image encryption is enabled.
+	KMSKeyId string `mapstructure:"kms_key_id" required:"false"`
 	// If this value is true, when the target image names including those
 	// copied are duplicated with existing images, it will delete the existing
 	// images and then create the target images, otherwise, the creation will
@@ -221,6 +238,26 @@ func (c *AlicloudImageConfig) Prepare(ctx *interpolate.Context) []error {
 		}
 
 		c.AlicloudImageDestinationRegions = regions
+	}
+
+	// A disk KMS key ID is only valid when disk encryption is explicitly enabled.
+	if c.ECSSystemDiskMapping.KMSKeyId != "" && !c.ECSSystemDiskMapping.Encrypted.True() {
+		errs = append(errs, fmt.Errorf("disk_encrypted must be true when disk_kms_key_id is specified for system_disk_mapping"))
+	}
+	for i := range c.ECSImagesDiskMappings {
+		if c.ECSImagesDiskMappings[i].KMSKeyId != "" && !c.ECSImagesDiskMappings[i].Encrypted.True() {
+			errs = append(errs, fmt.Errorf("disk_encrypted must be true when disk_kms_key_id is specified for image_disk_mappings[%d]", i))
+		}
+	}
+
+	// image_copy_kms_ids only makes sense when image encryption is enabled.
+	if len(c.ImageCopyKMSKeyIds) > 0 && !c.ImageEncrypted.True() {
+		errs = append(errs, fmt.Errorf("image_encrypted must be true when image_copy_kms_ids is specified"))
+	}
+
+	// kms_key_id only makes sense when image encryption is enabled.
+	if c.KMSKeyId != "" && !c.ImageEncrypted.True() {
+		errs = append(errs, fmt.Errorf("image_encrypted must be true when kms_key_id is specified"))
 	}
 
 	return errs

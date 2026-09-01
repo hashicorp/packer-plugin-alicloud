@@ -28,7 +28,20 @@
   true, a temporary image will be created from the provisioned instance in
   the main region and an encrypted copy will be generated in the same
   region. By default, Packer will keep the encryption setting to what it
-  was in the source image.
+  was in the source image. This option only affects the CopyImage
+  orchestration and does not influence instance-time disk encryption.
+
+- `image_copy_kms_ids` ([]string) - The KMS key IDs used to encrypt the target images when copying images
+  to other regions. This option only affects the CopyImage orchestration.
+  This option requires image_encrypted to be set to true. The KMS key IDs
+  correspond by index to image_copy_regions; an empty string or missing
+  entry means the default service KMS key is used for that region.
+
+- `kms_key_id` (string) - The KMS key ID used to encrypt the target image when copying the image
+  within the same region. This option only affects the CopyImage
+  orchestration. This option requires image_encrypted to be set to true.
+  If this option is left empty, the default service KMS key is used when
+  image encryption is enabled.
 
 - `image_force_delete` (bool) - If this value is true, when the target image names including those
   copied are duplicated with existing images, it will delete the existing

@@ -5,6 +5,8 @@ package ecs
 
 import (
 	"testing"
+
+	"github.com/hashicorp/packer-plugin-sdk/template/config"
 )
 
 func testAlicloudImageConfig() *AlicloudImageConfig {
@@ -150,5 +152,110 @@ func TestECSImageConfigPrepare_bootMode(t *testing.T) {
 	c.AlicloudBootMode = "UEFI-Preferred"
 	if err := c.Prepare(nil); err != nil {
 		t.Fatalf("shouldn't have err: %s", err)
+	}
+}
+
+func TestECSImageConfigPrepare_imageCopyKMSKeyIds(t *testing.T) {
+	c := testAlicloudImageConfig()
+	c.ImageEncrypted = config.TrileanFromBool(true)
+	c.AlicloudImageDestinationRegions = []string{"cn-beijing", "cn-hangzhou"}
+	c.ImageCopyKMSKeyIds = []string{"", "key-2"}
+	if err := c.Prepare(nil); err != nil {
+		t.Fatalf("shouldn't have err with empty placeholder and matching length: %s", err)
+	}
+
+	c = testAlicloudImageConfig()
+	c.ImageEncrypted = config.TrileanFromBool(true)
+	c.AlicloudImageDestinationRegions = []string{"cn-beijing", "cn-hangzhou", "cn-shanghai"}
+	c.ImageCopyKMSKeyIds = []string{"key-1", "key-2", "key-3"}
+	if err := c.Prepare(nil); err != nil {
+		t.Fatalf("shouldn't have err with matching length: %s", err)
+	}
+
+	c = testAlicloudImageConfig()
+	c.ImageEncrypted = config.TrileanFromBool(true)
+	c.AlicloudImageDestinationRegions = []string{"cn-beijing", "cn-hangzhou"}
+	c.ImageCopyKMSKeyIds = []string{"key-1"}
+	if err := c.Prepare(nil); err != nil {
+		t.Fatalf("shouldn't have err when image_copy_kms_ids is shorter than image_copy_regions: %s", err)
+	}
+
+	c = testAlicloudImageConfig()
+	c.AlicloudImageDestinationRegions = []string{"cn-beijing"}
+	c.ImageCopyKMSKeyIds = []string{"key-1"}
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have err when image_copy_kms_ids is specified but image_encrypted is not true")
+	}
+
+	c = testAlicloudImageConfig()
+	c.ImageEncrypted = config.TrileanFromBool(false)
+	c.AlicloudImageDestinationRegions = []string{"cn-beijing"}
+	c.ImageCopyKMSKeyIds = []string{"key-1"}
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have err when image_copy_kms_ids is specified but image_encrypted is false")
+	}
+}
+
+func TestECSImageConfigPrepare_kmsKeyIdRequiresEncrypted(t *testing.T) {
+	c := testAlicloudImageConfig()
+	c.ImageEncrypted = config.TrileanFromBool(true)
+	c.KMSKeyId = "same-region-kms-key"
+	if err := c.Prepare(nil); err != nil {
+		t.Fatalf("shouldn't have err when kms_key_id is specified with image_encrypted=true: %s", err)
+	}
+
+	c = testAlicloudImageConfig()
+	c.KMSKeyId = "same-region-kms-key"
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have err when kms_key_id is specified but image_encrypted is not set")
+	}
+
+	c = testAlicloudImageConfig()
+	c.ImageEncrypted = config.TrileanFromBool(false)
+	c.KMSKeyId = "same-region-kms-key"
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have err when kms_key_id is specified but image_encrypted is false")
+	}
+}
+
+func TestECSImageConfigPrepare_diskKMSKeyIdRequiresEncrypted(t *testing.T) {
+	c := testAlicloudImageConfig()
+	c.ECSSystemDiskMapping = AlicloudDiskDevice{
+		Encrypted: config.TrileanFromBool(true),
+		KMSKeyId:  "system-kms-key",
+	}
+	c.ECSImagesDiskMappings = []AlicloudDiskDevice{
+		{Encrypted: config.TrileanFromBool(true), KMSKeyId: "data-kms-key-1"},
+		{Encrypted: config.TrileanFromBool(true), KMSKeyId: "data-kms-key-2"},
+	}
+	if err := c.Prepare(nil); err != nil {
+		t.Fatalf("should allow different disk_kms_key_id values when encrypted: %s", err)
+	}
+
+	c = testAlicloudImageConfig()
+	c.ECSSystemDiskMapping = AlicloudDiskDevice{
+		Encrypted: config.TrileanFromBool(true),
+	}
+	c.ECSImagesDiskMappings = []AlicloudDiskDevice{
+		{Encrypted: config.TrileanFromBool(true)},
+	}
+	if err := c.Prepare(nil); err != nil {
+		t.Fatalf("shouldn't have err when encrypted disks omit KMS key ID: %s", err)
+	}
+
+	c = testAlicloudImageConfig()
+	c.ECSSystemDiskMapping = AlicloudDiskDevice{
+		KMSKeyId: "system-kms-key",
+	}
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have error when disk_kms_key_id is set but disk_encrypted is not true")
+	}
+
+	c = testAlicloudImageConfig()
+	c.ECSImagesDiskMappings = []AlicloudDiskDevice{
+		{Encrypted: config.TrileanFromBool(false), KMSKeyId: "data-kms-key"},
+	}
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have error when disk_kms_key_id is set but disk_encrypted is false")
 	}
 }

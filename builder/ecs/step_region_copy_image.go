@@ -25,6 +25,10 @@ type stepRegionCopyAlicloudImage struct {
 func (s *stepRegionCopyAlicloudImage) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	config := state.Get("config").(*Config)
 
+	// When the image is configured to be encrypted, we must include the source
+	// region itself in the destination list. CopyImage within the same region is
+	// the API operation that produces an encrypted copy of the original image,
+	// so skipping the source region would leave no encrypted image behind.
 	if config.ImageEncrypted != confighelper.TriUnset {
 		s.AlicloudImageDestinationRegions = append(s.AlicloudImageDestinationRegions, s.RegionId)
 		s.AlicloudImageDestinationNames = append(s.AlicloudImageDestinationNames, config.AlicloudImageName)
@@ -42,25 +46,22 @@ func (s *stepRegionCopyAlicloudImage) Run(ctx context.Context, state multistep.S
 	numberOfName := len(s.AlicloudImageDestinationNames)
 
 	ui.Say(fmt.Sprintf("Coping image %s from %s...", srcImageId, s.RegionId))
+	crossRegionIndex := -1
 	for index, destinationRegion := range s.AlicloudImageDestinationRegions {
-		if destinationRegion == s.RegionId && config.ImageEncrypted == confighelper.TriUnset {
+		// Normally there is no reason to copy an image to the same region it
+		// already lives in. However, when image encryption is enabled, CopyImage
+		// must still be invoked for the source region so that an encrypted copy
+		// of the image is created. Do not simplify this to a plain same-region
+		// skip without considering the encryption use case.
+		if destinationRegion == s.RegionId && !config.ImageEncrypted.True() {
 			continue
 		}
 
-		ecsImageName := ""
-		if numberOfName > 0 && index < numberOfName {
-			ecsImageName = s.AlicloudImageDestinationNames[index]
+		if destinationRegion != s.RegionId {
+			crossRegionIndex++
 		}
 
-		copyImageRequest := ecs.CreateCopyImageRequest()
-		copyImageRequest.RegionId = s.RegionId
-		copyImageRequest.ImageId = srcImageId
-		copyImageRequest.DestinationRegionId = destinationRegion
-		copyImageRequest.DestinationImageName = ecsImageName
-		copyImageRequest.ResourceGroupId = config.AlicloudResourceGroupId
-		if config.ImageEncrypted != confighelper.TriUnset {
-			copyImageRequest.Encrypted = requests.NewBoolean(config.ImageEncrypted.True())
-		}
+		copyImageRequest := s.buildCopyImageRequest(index, destinationRegion, config, srcImageId, numberOfName, crossRegionIndex)
 
 		imageResponse, err := client.CopyImage(copyImageRequest)
 		if err != nil {
@@ -78,6 +79,38 @@ func (s *stepRegionCopyAlicloudImage) Run(ctx context.Context, state multistep.S
 	}
 
 	return multistep.ActionContinue
+}
+
+func (s *stepRegionCopyAlicloudImage) buildCopyImageRequest(index int, destinationRegion string, config *Config, srcImageId string, numberOfName int, crossRegionIndex int) *ecs.CopyImageRequest {
+	// Leave the destination image name empty by default so that ECS auto-generates
+	// a unique name. Reusing config.AlicloudImageName here would force every
+	// destination region to share the same name, causing conflicts on re-runs
+	// unless image_force_delete is enabled.
+	ecsImageName := ""
+	if numberOfName > 0 && index < numberOfName {
+		ecsImageName = s.AlicloudImageDestinationNames[index]
+	}
+
+	copyImageRequest := ecs.CreateCopyImageRequest()
+	copyImageRequest.RegionId = s.RegionId
+	copyImageRequest.ImageId = srcImageId
+	copyImageRequest.DestinationRegionId = destinationRegion
+	copyImageRequest.DestinationImageName = ecsImageName
+	copyImageRequest.ResourceGroupId = config.AlicloudResourceGroupId
+	if config.ImageEncrypted.True() {
+		copyImageRequest.Encrypted = requests.NewBoolean(true)
+		if destinationRegion == s.RegionId {
+			if config.KMSKeyId != "" {
+				copyImageRequest.KMSKeyId = config.KMSKeyId
+			}
+		} else {
+			if crossRegionIndex < len(config.ImageCopyKMSKeyIds) && config.ImageCopyKMSKeyIds[crossRegionIndex] != "" {
+				copyImageRequest.KMSKeyId = config.ImageCopyKMSKeyIds[crossRegionIndex]
+			}
+		}
+	}
+
+	return copyImageRequest
 }
 
 func (s *stepRegionCopyAlicloudImage) Cleanup(state multistep.StateBag) {

@@ -175,8 +175,6 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 		})
 	}
 	steps = append(steps,
-		&stepAttachKeyPair{},
-		&stepRunAlicloudInstance{},
 		&communicator.StepConnect{
 			Config: &b.config.RunConfig.Comm,
 			Host: SSHHost(

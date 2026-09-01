@@ -19,6 +19,9 @@ type stepShareAlicloudImage struct {
 }
 
 func (s *stepShareAlicloudImage) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
+	if len(s.AlicloudImageShareAccounts) == 0 && len(s.AlicloudImageUNShareAccounts) == 0 {
+		return multistep.ActionContinue
+	}
 	client := state.Get("client").(*ClientWrapper)
 	alicloudImages := state.Get("alicloudimages").(map[string]string)
 
