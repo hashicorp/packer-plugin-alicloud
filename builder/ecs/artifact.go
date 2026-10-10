@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	ecs20140526Client "github.com/alibabacloud-go/ecs-20140526/v7/client"
+	"github.com/alibabacloud-go/tea/tea"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
 )
@@ -67,28 +69,30 @@ func (a *Artifact) Destroy() error {
 	errors := make([]error, 0)
 
 	copyingImages := make(map[string]string, len(a.AlicloudImages))
-	sourceImage := make(map[string]*ecs.Image, 1)
+	sourceImage := make(map[string]*ecs20140526Client.DescribeImagesResponseBodyImagesImage, 1)
 	for regionId, imageId := range a.AlicloudImages {
-		describeImagesRequest := ecs.CreateDescribeImagesRequest()
-		describeImagesRequest.RegionId = regionId
-		describeImagesRequest.ImageId = imageId
-		describeImagesRequest.Status = ImageStatusQueried
+		describeImagesRequest := &ecs20140526Client.DescribeImagesRequest{
+			RegionId: tea.String(regionId),
+			ImageId:  tea.String(imageId),
+			Status:   tea.String(ImageStatusQueried),
+		}
 		imagesResponse, err := a.Client.DescribeImages(describeImagesRequest)
 		if err != nil {
 			errors = append(errors, err)
 		}
 
-		images := imagesResponse.Images.Image
+		images := imagesResponse.Body.Images.Image
 		if len(images) == 0 {
 			err := fmt.Errorf("Error retrieving details for alicloud image(%s), no alicloud images found", imageId)
 			errors = append(errors, err)
 			continue
 		}
 
-		if images[0].IsCopied && images[0].Status != ImageStatusAvailable {
+		image := images[0]
+		if tea.BoolValue(image.IsCopied) && tea.StringValue(image.Status) != ImageStatusAvailable {
 			copyingImages[regionId] = imageId
 		} else {
-			sourceImage[regionId] = &images[0]
+			sourceImage[regionId] = image
 		}
 	}
 
@@ -109,7 +113,7 @@ func (a *Artifact) Destroy() error {
 	}
 
 	for regionId, image := range sourceImage {
-		imageId := image.ImageId
+		imageId := tea.StringValue(image.ImageId)
 		log.Printf("Delete alicloud image (%s) from region (%s)", imageId, regionId)
 
 		errs := a.unsharedAccountsOnImages(regionId, imageId)
@@ -127,7 +131,7 @@ func (a *Artifact) Destroy() error {
 		//Delete the snapshot of this images
 		for _, diskDevices := range image.DiskDeviceMappings.DiskDeviceMapping {
 			deleteSnapshotRequest := ecs.CreateDeleteSnapshotRequest()
-			deleteSnapshotRequest.SnapshotId = diskDevices.SnapshotId
+			deleteSnapshotRequest.SnapshotId = tea.StringValue(diskDevices.SnapshotId)
 			_, err := a.Client.DeleteSnapshot(deleteSnapshotRequest)
 			if err != nil {
 				errors = append(errors, err)

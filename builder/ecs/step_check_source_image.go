@@ -7,7 +7,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
+	ecs20140526Client "github.com/alibabacloud-go/ecs-20140526/v7/client"
+	"github.com/alibabacloud-go/tea/tea"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
 )
@@ -21,27 +22,28 @@ func (s *stepCheckAlicloudSourceImage) Run(ctx context.Context, state multistep.
 	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packersdk.Ui)
 
-	describeImagesRequest := ecs.CreateDescribeImagesRequest()
-	describeImagesRequest.RegionId = config.AlicloudRegion
-	describeImagesRequest.ImageId = config.AlicloudSourceImage
+	describeImagesRequest := &ecs20140526Client.DescribeImagesRequest{
+		RegionId: tea.String(config.AlicloudRegion),
+		ImageId:  tea.String(config.AlicloudSourceImage),
+	}
 	if config.AlicloudSkipImageValidation {
-		describeImagesRequest.ShowExpired = "true"
+		describeImagesRequest.ShowExpired = tea.Bool(true)
 	}
 	imagesResponse, err := client.DescribeImages(describeImagesRequest)
 	if err != nil {
 		return halt(state, err, "Error querying alicloud image")
 	}
 
-	images := imagesResponse.Images.Image
+	images := imagesResponse.Body.Images.Image
 
 	// Describe marketplace image
-	describeImagesRequest.ImageOwnerAlias = "marketplace"
+	describeImagesRequest.ImageOwnerAlias = tea.String("marketplace")
 	marketImagesResponse, err := client.DescribeImages(describeImagesRequest)
 	if err != nil {
 		return halt(state, err, "Error querying alicloud marketplace image")
 	}
 
-	marketImages := marketImagesResponse.Images.Image
+	marketImages := marketImagesResponse.Body.Images.Image
 	if len(marketImages) > 0 {
 		images = append(images, marketImages...)
 	}
@@ -51,9 +53,9 @@ func (s *stepCheckAlicloudSourceImage) Run(ctx context.Context, state multistep.
 		return halt(state, err, "")
 	}
 
-	ui.Message(fmt.Sprintf("Found image ID: %s", images[0].ImageId))
+	ui.Message(fmt.Sprintf("Found image ID: %s", tea.StringValue(images[0].ImageId)))
 
-	state.Put("source_image", &images[0])
+	state.Put("source_image", images[0])
 	return multistep.ActionContinue
 }
 

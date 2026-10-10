@@ -82,3 +82,30 @@ func TestAlicloudAccessConfigPrepareRegion(t *testing.T) {
 
 	c.AlicloudSkipValidation = false
 }
+
+func TestAlicloudAccessConfigClientRamRoleArn(t *testing.T) {
+	newConfig := func() *AlicloudAccessConfig {
+		c := testAlicloudAccessConfig()
+		c.AlicloudRegion = "cn-beijing"
+		return c
+	}
+
+	c := newConfig()
+	c.AlicloudRamRoleArn = "acs:ram::1234567890123456:role/packer"
+	if _, err := c.Client(); err == nil {
+		t.Fatalf("should have err when ram_session_name is missing")
+	}
+
+	c = newConfig()
+	c.AlicloudRamSessionName = "packer"
+	if _, err := c.Client(); err == nil {
+		t.Fatalf("should have err when ram_role_arn is missing")
+	}
+
+	c = newConfig()
+	c.AlicloudRamRoleArn = "acs:ram::1234567890123456:role/packer"
+	c.AlicloudRamSessionName = "packer"
+	if _, err := c.Client(); err != nil {
+		t.Fatalf("shouldn't have err: %s", err)
+	}
+}

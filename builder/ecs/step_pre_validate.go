@@ -7,7 +7,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
+	ecs20140526Client "github.com/alibabacloud-go/ecs-20140526/v7/client"
+	"github.com/alibabacloud-go/tea/tea"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
 )
@@ -69,19 +70,20 @@ func (s *stepPreValidate) validateDestImageName(state multistep.StateBag) error 
 
 	ui.Say("Prevalidating image name...")
 
-	describeImagesRequest := ecs.CreateDescribeImagesRequest()
-	describeImagesRequest.RegionId = config.AlicloudRegion
-	describeImagesRequest.ImageName = s.AlicloudDestImageName
-	describeImagesRequest.Status = ImageStatusQueried
+	describeImagesRequest := &ecs20140526Client.DescribeImagesRequest{
+		RegionId:  tea.String(config.AlicloudRegion),
+		ImageName: tea.String(s.AlicloudDestImageName),
+		Status:    tea.String(ImageStatusQueried),
+	}
 
 	imagesResponse, err := client.DescribeImages(describeImagesRequest)
 	if err != nil {
 		return fmt.Errorf("Error querying alicloud image: %s", err)
 	}
 
-	images := imagesResponse.Images.Image
+	images := imagesResponse.Body.Images.Image
 	if len(images) > 0 {
-		return fmt.Errorf("Error: Image Name: '%s' is used by an existing alicloud image: %s", images[0].ImageName, images[0].ImageId)
+		return fmt.Errorf("image name '%s' is used by an existing alicloud image: %s", tea.StringValue(images[0].ImageName), tea.StringValue(images[0].ImageId))
 	}
 
 	return nil

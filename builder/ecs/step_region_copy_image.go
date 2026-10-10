@@ -45,6 +45,17 @@ func (s *stepRegionCopyAlicloudImage) Run(ctx context.Context, state multistep.S
 	alicloudImages := state.Get("alicloudimages").(map[string]string)
 	numberOfName := len(s.AlicloudImageDestinationNames)
 
+	// CopyImage requires the source image to be Available (100% progress).
+	// With enable_image_instance_access the previous step may have returned
+	// while the image is only Usable, so wait for the source image to become
+	// Available before copying it.
+	if config.EnableImageInstanceAccess {
+		ui.Message(fmt.Sprintf("Waiting for source image %s in %s to become available before copying...", srcImageId, s.RegionId))
+		if _, err := client.WaitForImageStatus(s.RegionId, srcImageId, ImageStatusAvailable, time.Duration(s.WaitCopyingImageReadyTimeout)*time.Second); err != nil {
+			return halt(state, err, fmt.Sprintf("Timeout waiting source image %s to become available before copying", srcImageId))
+		}
+	}
+
 	ui.Say(fmt.Sprintf("Coping image %s from %s...", srcImageId, s.RegionId))
 	crossRegionIndex := -1
 	for index, destinationRegion := range s.AlicloudImageDestinationRegions {
@@ -75,6 +86,16 @@ func (s *stepRegionCopyAlicloudImage) Run(ctx context.Context, state multistep.S
 	if config.ImageEncrypted != confighelper.TriUnset {
 		if _, err := client.WaitForImageStatus(s.RegionId, alicloudImages[s.RegionId], ImageStatusAvailable, time.Duration(s.WaitCopyingImageReadyTimeout)*time.Second); err != nil {
 			return halt(state, err, fmt.Sprintf("Timeout waiting image %s finish copying", alicloudImages[s.RegionId]))
+		}
+	}
+
+	for copiedRegionId, copiedImageId := range alicloudImages {
+		if copiedImageId == srcImageId || copiedRegionId == s.RegionId {
+			continue
+		}
+		ui.Message(fmt.Sprintf("Waiting for copied image %s in %s to become available...", copiedImageId, copiedRegionId))
+		if _, err := client.WaitForImageStatus(copiedRegionId, copiedImageId, ImageStatusAvailable, time.Duration(s.WaitCopyingImageReadyTimeout)*time.Second); err != nil {
+			return halt(state, err, fmt.Sprintf("Timeout waiting copied image %s in %s to become available", copiedImageId, copiedRegionId))
 		}
 	}
 

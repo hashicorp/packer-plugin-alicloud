@@ -93,6 +93,7 @@ type FlatConfig struct {
 	AlicloudTargetImageFamily         *string                  `mapstructure:"target_image_family" required:"false" cty:"target_image_family" hcl:"target_image_family"`
 	AlicloudBootMode                  *string                  `mapstructure:"boot_mode" required:"false" cty:"boot_mode" hcl:"boot_mode"`
 	AlicloudImageDeleteSSHPrivateKey  *bool                    `mapstructure:"image_delete_ssh_private_key" required:"false" cty:"image_delete_ssh_private_key" hcl:"image_delete_ssh_private_key"`
+	EnableImageInstanceAccess         *bool                    `mapstructure:"enable_image_instance_access" required:"false" cty:"enable_image_instance_access" hcl:"enable_image_instance_access"`
 	AssociatePublicIpAddress          *bool                    `mapstructure:"associate_public_ip_address" cty:"associate_public_ip_address" hcl:"associate_public_ip_address"`
 	ZoneId                            *string                  `mapstructure:"zone_id" required:"false" cty:"zone_id" hcl:"zone_id"`
 	IOOptimized                       *bool                    `mapstructure:"io_optimized" required:"false" cty:"io_optimized" hcl:"io_optimized"`
@@ -230,6 +231,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"target_image_family":              &hcldec.AttrSpec{Name: "target_image_family", Type: cty.String, Required: false},
 		"boot_mode":                        &hcldec.AttrSpec{Name: "boot_mode", Type: cty.String, Required: false},
 		"image_delete_ssh_private_key":     &hcldec.AttrSpec{Name: "image_delete_ssh_private_key", Type: cty.Bool, Required: false},
+		"enable_image_instance_access":     &hcldec.AttrSpec{Name: "enable_image_instance_access", Type: cty.Bool, Required: false},
 		"associate_public_ip_address":      &hcldec.AttrSpec{Name: "associate_public_ip_address", Type: cty.Bool, Required: false},
 		"zone_id":                          &hcldec.AttrSpec{Name: "zone_id", Type: cty.String, Required: false},
 		"io_optimized":                     &hcldec.AttrSpec{Name: "io_optimized", Type: cty.Bool, Required: false},

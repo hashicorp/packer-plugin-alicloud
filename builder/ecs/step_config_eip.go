@@ -31,6 +31,10 @@ var allocateEipAddressRetryErrors = []string{
 	"LastTokenProcessing",
 }
 
+var releaseEipAddressRetryErrors = []string{
+	"IncorrectEipStatus",
+}
+
 func (s *stepConfigAlicloudEIP) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	client := state.Get("client").(*ClientWrapper)
 	ui := state.Get("ui").(packersdk.Ui)
@@ -143,30 +147,52 @@ func (s *stepConfigAlicloudEIP) Cleanup(state multistep.StateBag) {
 		return
 	}
 
-	cleanUpMessage(state, "EIP association")
-
 	client := state.Get("client").(*ClientWrapper)
 	instance := state.Get("instance").(*ecs.Instance)
 	ui := state.Get("ui").(packersdk.Ui)
 
-	unassociateEipAddressRequest := ecs.CreateUnassociateEipAddressRequest()
-	unassociateEipAddressRequest.AllocationId = s.allocatedId
-	unassociateEipAddressRequest.InstanceId = instance.InstanceId
-	if _, err := client.UnassociateEipAddress(unassociateEipAddressRequest); err != nil {
-		ui.Say(fmt.Sprintf("Failed to unassociate EIP: %s", err))
-	}
+	// If the source instance was already deleted after CreateImage
+	// succeeded, the platform unassociates the EIP automatically, but
+	// asynchronously: the EIP may still be InUse or Unassociating when
+	// cleanup runs, so wait for it to become Available before releasing.
+	_, instanceDeletedEarly := state.GetOk("instance_deleted_early")
+	if !instanceDeletedEarly {
+		cleanUpMessage(state, "EIP association")
 
-	if err := s.waitForEipStatus(client, instance.RegionId, s.allocatedId, EipStatusAvailable); err != nil {
-		ui.Say(fmt.Sprintf("Timeout while unassociating EIP: %s", err))
+		unassociateEipAddressRequest := ecs.CreateUnassociateEipAddressRequest()
+		unassociateEipAddressRequest.AllocationId = s.allocatedId
+		unassociateEipAddressRequest.InstanceId = instance.InstanceId
+		if _, err := client.UnassociateEipAddress(unassociateEipAddressRequest); err != nil {
+			ui.Say(fmt.Sprintf("Failed to unassociate EIP: %s", err))
+		}
+
+		if err := s.waitForEipStatus(client, instance.RegionId, s.allocatedId, EipStatusAvailable); err != nil {
+			ui.Say(fmt.Sprintf("Timeout while unassociating EIP: %s", err))
+		}
 	}
 
 	if len(s.EIPId) > 0 {
 		return
 	}
+
+	if instanceDeletedEarly {
+		cleanUpMessage(state, "EIP association")
+		if err := s.waitForEipStatus(client, instance.RegionId, s.allocatedId, EipStatusAvailable); err != nil {
+			ui.Say(fmt.Sprintf("Timeout while waiting EIP to be unassociated: %s", err))
+		}
+	}
+
 	cleanUpMessage(state, "EIP")
 	releaseEipAddressRequest := ecs.CreateReleaseEipAddressRequest()
 	releaseEipAddressRequest.AllocationId = s.allocatedId
-	if _, err := client.ReleaseEipAddress(releaseEipAddressRequest); err != nil {
+	_, err := client.WaitForExpected(&WaitForExpectArgs{
+		RequestFunc: func() (responses.AcsResponse, error) {
+			return client.ReleaseEipAddress(releaseEipAddressRequest)
+		},
+		EvalFunc:   client.EvalCouldRetryResponse(releaseEipAddressRetryErrors, EvalRetryErrorType),
+		RetryTimes: defaultRetryTimes,
+	})
+	if err != nil {
 		ui.Say(fmt.Sprintf("Failed to release EIP: %s", err))
 	}
 }

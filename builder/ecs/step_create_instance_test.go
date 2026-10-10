@@ -7,7 +7,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
+	ecs20140526Client "github.com/alibabacloud-go/ecs-20140526/v7/client"
+	"github.com/alibabacloud-go/tea/tea"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
@@ -20,7 +21,7 @@ func testStepCreateAlicloudInstanceState(networkType InstanceNetWork) multistep.
 		Writer: new(bytes.Buffer),
 	})
 	state.Put("client", &ClientWrapper{})
-	state.Put("source_image", &ecs.Image{ImageId: "m-test-image"})
+	state.Put("source_image", &ecs20140526Client.DescribeImagesResponseBodyImagesImage{ImageId: tea.String("m-test-image")})
 	state.Put("securitygroupid", "sg-test")
 	state.Put("networktype", networkType)
 	state.Put("vswitchid", "vsw-test")

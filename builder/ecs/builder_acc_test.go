@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	ecs20140526Client "github.com/alibabacloud-go/ecs-20140526/v7/client"
+	"github.com/alibabacloud-go/tea/tea"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/hashicorp/packer-plugin-sdk/acctest"
 	"github.com/hashicorp/packer-plugin-sdk/acctest/testutils"
@@ -131,21 +133,23 @@ func checkImageDisksSettings(manifestfilepath string) TestCheckFunc {
 		// describe the image, get block devices with a snapshot
 		client, _ := testAliyunClient()
 
-		describeImagesRequest := ecs.CreateDescribeImagesRequest()
-		describeImagesRequest.RegionId = defaultTestRegion
-		describeImagesRequest.ImageId = imageId
+		describeImagesRequest := &ecs20140526Client.DescribeImagesRequest{
+			RegionId: tea.String(defaultTestRegion),
+			ImageId:  tea.String(imageId),
+		}
 		imagesResponse, err := client.DescribeImages(describeImagesRequest)
 		if err != nil {
 			return fmt.Errorf("describe images failed due to %s", err)
 		}
 
-		if len(imagesResponse.Images.Image) == 0 {
+		images := imagesResponse.Body.Images.Image
+		if len(images) == 0 {
 			return fmt.Errorf("image %s generated can not be found", imageId)
 		}
 
-		image := imagesResponse.Images.Image[0]
-		if image.Size != 60 {
-			return fmt.Errorf("the size of image %s should be equal to 60G but got %dG", imageId, image.Size)
+		image := images[0]
+		if int(tea.Int32Value(image.Size)) != 60 {
+			return fmt.Errorf("the size of image %s should be equal to 60G but got %dG", imageId, tea.Int32Value(image.Size))
 		}
 		if len(image.DiskDeviceMappings.DiskDeviceMapping) != 3 {
 			return fmt.Errorf("image %s should contains 3 disks", imageId)
@@ -153,16 +157,16 @@ func checkImageDisksSettings(manifestfilepath string) TestCheckFunc {
 
 		var snapshotIds []string
 		for _, mapping := range image.DiskDeviceMappings.DiskDeviceMapping {
-			if mapping.Type == DiskTypeSystem {
-				if mapping.Size != "60" {
-					return fmt.Errorf("the system snapshot size of image %s should be equal to 60G but got %sG", imageId, mapping.Size)
+			if tea.StringValue(mapping.Type) == DiskTypeSystem {
+				if tea.StringValue(mapping.Size) != "60" {
+					return fmt.Errorf("the system snapshot size of image %s should be equal to 60G but got %sG", imageId, tea.StringValue(mapping.Size))
 				}
 			} else {
-				if mapping.Size != "25" {
-					return fmt.Errorf("the data disk size of image %s should be equal to 25G but got %sG", imageId, mapping.Size)
+				if tea.StringValue(mapping.Size) != "25" {
+					return fmt.Errorf("the data disk size of image %s should be equal to 25G but got %sG", imageId, tea.StringValue(mapping.Size))
 				}
 
-				snapshotIds = append(snapshotIds, mapping.SnapshotId)
+				snapshotIds = append(snapshotIds, tea.StringValue(mapping.SnapshotId))
 			}
 		}
 
@@ -250,19 +254,21 @@ func checkIgnoreDataDisks(manifestfilepath string) TestCheckFunc {
 		// describe the image, get block devices with a snapshot
 		client, _ := testAliyunClient()
 
-		describeImagesRequest := ecs.CreateDescribeImagesRequest()
-		describeImagesRequest.RegionId = defaultTestRegion
-		describeImagesRequest.ImageId = imageId
+		describeImagesRequest := &ecs20140526Client.DescribeImagesRequest{
+			RegionId: tea.String(defaultTestRegion),
+			ImageId:  tea.String(imageId),
+		}
 		imagesResponse, err := client.DescribeImages(describeImagesRequest)
 		if err != nil {
 			return fmt.Errorf("describe images failed due to %s", err)
 		}
 
-		if len(imagesResponse.Images.Image) == 0 {
+		images := imagesResponse.Body.Images.Image
+		if len(images) == 0 {
 			return fmt.Errorf("image %s generated can not be found", imageId)
 		}
 
-		image := imagesResponse.Images.Image[0]
+		image := images[0]
 		if len(image.DiskDeviceMappings.DiskDeviceMapping) != 1 {
 			return fmt.Errorf("image %s should only contain one disks", imageId)
 		}
@@ -369,24 +375,27 @@ func checkRegionCopy(regions []string, manifestfilepath string) TestCheckFunc {
 
 		client, _ := testAliyunClient()
 		for regionId, imageId := range regionArtifacts {
-			describeImagesRequest := ecs.CreateDescribeImagesRequest()
-			describeImagesRequest.RegionId = regionId
-			describeImagesRequest.ImageId = imageId
-			describeImagesRequest.Status = ImageStatusQueried
+			describeImagesRequest := &ecs20140526Client.DescribeImagesRequest{
+				RegionId: tea.String(regionId),
+				ImageId:  tea.String(imageId),
+				Status:   tea.String(ImageStatusQueried),
+			}
 			describeImagesResponse, err := client.DescribeImages(describeImagesRequest)
 			if err != nil {
 				return fmt.Errorf("describe generated image %s failed due to %s", imageId, err)
 			}
-			if len(describeImagesResponse.Images.Image) == 0 {
+
+			images := describeImagesResponse.Body.Images.Image
+			if len(images) == 0 {
 				return fmt.Errorf("image %s in artifacts can not be found", imageId)
 			}
 
-			image := describeImagesResponse.Images.Image[0]
-			if image.IsCopied && regionId == "cn-hangzhou" && !strings.HasPrefix(image.ImageName, "packer-copy-test-hz") {
-				return fmt.Errorf("the name of image %s in artifacts should begin with %s but got %s", imageId, "packer-copy-test-hz", image.ImageName)
+			image := images[0]
+			if tea.BoolValue(image.IsCopied) && regionId == "cn-hangzhou" && !strings.HasPrefix(tea.StringValue(image.ImageName), "packer-copy-test-hz") {
+				return fmt.Errorf("the name of image %s in artifacts should begin with %s but got %s", imageId, "packer-copy-test-hz", tea.StringValue(image.ImageName))
 			}
-			if image.IsCopied && regionId == "cn-shenzhen" && !strings.HasPrefix(image.ImageName, "packer-copy-test-sz") {
-				return fmt.Errorf("the name of image %s in artifacts should begin with %s but got %s", imageId, "packer-copy-test-sz", image.ImageName)
+			if tea.BoolValue(image.IsCopied) && regionId == "cn-shenzhen" && !strings.HasPrefix(tea.StringValue(image.ImageName), "packer-copy-test-sz") {
+				return fmt.Errorf("the name of image %s in artifacts should begin with %s but got %s", imageId, "packer-copy-test-sz", tea.StringValue(image.ImageName))
 			}
 		}
 
@@ -513,18 +522,20 @@ func TestBuilderAcc_forceDeleteSnapshot(t *testing.T) {
 	// Get image data by image image name
 	client, _ := testAliyunClient()
 
-	describeImagesRequest := ecs.CreateDescribeImagesRequest()
-	describeImagesRequest.RegionId = "cn-beijing"
-	describeImagesRequest.ImageName = "packer-test-" + destImageName
-	images, _ := client.DescribeImages(describeImagesRequest)
+	describeImagesRequest := &ecs20140526Client.DescribeImagesRequest{
+		RegionId:  tea.String("cn-beijing"),
+		ImageName: tea.String("packer-test-" + destImageName),
+	}
+	imagesResponse, _ := client.DescribeImages(describeImagesRequest)
 
-	image := images.Images.Image[0]
+	images := imagesResponse.Body.Images.Image
+	image := images[0]
 
 	// Get snapshot ids for image
 	snapshotIds := []string{}
 	for _, device := range image.DiskDeviceMappings.DiskDeviceMapping {
-		if device.Device != "" && device.SnapshotId != "" {
-			snapshotIds = append(snapshotIds, device.SnapshotId)
+		if tea.StringValue(device.Device) != "" && tea.StringValue(device.SnapshotId) != "" {
+			snapshotIds = append(snapshotIds, tea.StringValue(device.SnapshotId))
 		}
 	}
 
@@ -657,42 +668,45 @@ func checkImageTags(manifestfilepath string) TestCheckFunc {
 			}
 		}
 
-		describeImagesRequest := ecs.CreateDescribeImagesRequest()
-		describeImagesRequest.RegionId = defaultTestRegion
-		describeImagesRequest.ImageId = imageId
+		describeImagesRequest := &ecs20140526Client.DescribeImagesRequest{
+			RegionId: tea.String(defaultTestRegion),
+			ImageId:  tea.String(imageId),
+		}
 		imagesResponse, err := client.DescribeImages(describeImagesRequest)
 		if err != nil {
 			return fmt.Errorf("describe images failed due to %s", err)
 		}
 
-		if len(imagesResponse.Images.Image) == 0 {
+		images := imagesResponse.Body.Images.Image
+		if len(images) == 0 {
 			return fmt.Errorf("image %s generated can not be found", imageId)
 		}
 
-		image := imagesResponse.Images.Image[0]
+		image := images[0]
 		for _, mapping := range image.DiskDeviceMappings.DiskDeviceMapping {
+			snapshotId := tea.StringValue(mapping.SnapshotId)
 			describeSnapshotTagsRequest := ecs.CreateDescribeTagsRequest()
 			describeSnapshotTagsRequest.RegionId = defaultTestRegion
 			describeSnapshotTagsRequest.ResourceType = TagResourceSnapshot
-			describeSnapshotTagsRequest.ResourceId = mapping.SnapshotId
+			describeSnapshotTagsRequest.ResourceId = snapshotId
 			snapshotTagsResponse, err := client.DescribeTags(describeSnapshotTagsRequest)
 			if err != nil {
 				return fmt.Errorf("failed to get snapshot tags due to %s", err)
 			}
 
 			if len(snapshotTagsResponse.Tags.Tag) != 2 {
-				return fmt.Errorf("expect 2 tags set on snapshot %s but got %d", mapping.SnapshotId, len(snapshotTagsResponse.Tags.Tag))
+				return fmt.Errorf("expect 2 tags set on snapshot %s but got %d", snapshotId, len(snapshotTagsResponse.Tags.Tag))
 			}
 
 			for _, tag := range snapshotTagsResponse.Tags.Tag {
 				if tag.TagKey != "TagKey1" && tag.TagKey != "TagKey2" {
-					return fmt.Errorf("tags on snapshot %s should be within the list of TagKey1 and TagKey2 but got %s", mapping.SnapshotId, tag.TagKey)
+					return fmt.Errorf("tags on snapshot %s should be within the list of TagKey1 and TagKey2 but got %s", snapshotId, tag.TagKey)
 				}
 
 				if tag.TagKey == "TagKey1" && tag.TagValue != "TagValue1" {
-					return fmt.Errorf("the value for tag %s on snapshot %s should be TagValue1 but got %s", tag.TagKey, mapping.SnapshotId, tag.TagValue)
+					return fmt.Errorf("the value for tag %s on snapshot %s should be TagValue1 but got %s", tag.TagKey, snapshotId, tag.TagValue)
 				} else if tag.TagKey == "TagKey2" && tag.TagValue != "TagValue2" {
-					return fmt.Errorf("the value for tag %s on snapshot %s should be TagValue2 but got %s", tag.TagKey, mapping.SnapshotId, tag.TagValue)
+					return fmt.Errorf("the value for tag %s on snapshot %s should be TagValue2 but got %s", tag.TagKey, snapshotId, tag.TagValue)
 				}
 			}
 		}
@@ -766,22 +780,24 @@ func checkDataDiskEncrypted(manifestfilepath string) TestCheckFunc {
 		// describe the image, get block devices with a snapshot
 		client, _ := testAliyunClient()
 
-		describeImagesRequest := ecs.CreateDescribeImagesRequest()
-		describeImagesRequest.RegionId = defaultTestRegion
-		describeImagesRequest.ImageId = imageId
+		describeImagesRequest := &ecs20140526Client.DescribeImagesRequest{
+			RegionId: tea.String(defaultTestRegion),
+			ImageId:  tea.String(imageId),
+		}
 		imagesResponse, err := client.DescribeImages(describeImagesRequest)
 		if err != nil {
 			return fmt.Errorf("describe images failed due to %s", err)
 		}
 
-		if len(imagesResponse.Images.Image) == 0 {
+		images := imagesResponse.Body.Images.Image
+		if len(images) == 0 {
 			return fmt.Errorf("image %s generated can not be found", imageId)
 		}
-		image := imagesResponse.Images.Image[0]
+		image := images[0]
 
 		var snapshotIds []string
 		for _, mapping := range image.DiskDeviceMappings.DiskDeviceMapping {
-			snapshotIds = append(snapshotIds, mapping.SnapshotId)
+			snapshotIds = append(snapshotIds, tea.StringValue(mapping.SnapshotId))
 		}
 
 		data, _ := json.Marshal(snapshotIds)
@@ -869,27 +885,29 @@ func checkSystemDiskEncrypted(manifestfilepath string) TestCheckFunc {
 		// describe the image, get block devices with a snapshot
 		client, _ := testAliyunClient()
 
-		describeImagesRequest := ecs.CreateDescribeImagesRequest()
-		describeImagesRequest.RegionId = defaultTestRegion
-		describeImagesRequest.ImageId = imageId
-		describeImagesRequest.Status = ImageStatusQueried
+		describeImagesRequest := &ecs20140526Client.DescribeImagesRequest{
+			RegionId: tea.String(defaultTestRegion),
+			ImageId:  tea.String(imageId),
+			Status:   tea.String(ImageStatusQueried),
+		}
 		imagesResponse, err := client.DescribeImages(describeImagesRequest)
 		if err != nil {
 			return fmt.Errorf("describe images failed due to %s", err)
 		}
 
-		if len(imagesResponse.Images.Image) == 0 {
+		images := imagesResponse.Body.Images.Image
+		if len(images) == 0 {
 			return fmt.Errorf("image %s generated can not be found", imageId)
 		}
 
-		image := imagesResponse.Images.Image[0]
-		if image.IsCopied == false {
-			return fmt.Errorf("image %s generated expexted to be copied but false", image.ImageId)
+		image := images[0]
+		if !tea.BoolValue(image.IsCopied) {
+			return fmt.Errorf("image %s generated expexted to be copied but false", tea.StringValue(image.ImageId))
 		}
 
 		describeSnapshotRequest := ecs.CreateDescribeSnapshotsRequest()
 		describeSnapshotRequest.RegionId = defaultTestRegion
-		describeSnapshotRequest.SnapshotIds = fmt.Sprintf("[\"%s\"]", image.DiskDeviceMappings.DiskDeviceMapping[0].SnapshotId)
+		describeSnapshotRequest.SnapshotIds = fmt.Sprintf("[\"%s\"]", tea.StringValue(image.DiskDeviceMappings.DiskDeviceMapping[0].SnapshotId))
 		describeSnapshotsResponse, err := client.DescribeSnapshots(describeSnapshotRequest)
 		if err != nil {
 			return fmt.Errorf("describe system snapshots failed due to %s", err)
