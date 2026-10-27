@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	ecs20140526Client "github.com/alibabacloud-go/ecs-20140526/v7/client"
+	"github.com/alibabacloud-go/tea/tea"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/errors"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/responses"
@@ -199,15 +201,16 @@ func (p *PostProcessor) PostProcess(ctx context.Context, ui packersdk.Ui, artifa
 
 	endpoint := getEndPoint(p.config.AlicloudRegion, p.config.OSSBucket)
 
-	describeImagesRequest := ecs.CreateDescribeImagesRequest()
-	describeImagesRequest.RegionId = p.config.AlicloudRegion
-	describeImagesRequest.ImageName = p.config.AlicloudImageName
+	describeImagesRequest := &ecs20140526Client.DescribeImagesRequest{
+		RegionId:  tea.String(p.config.AlicloudRegion),
+		ImageName: tea.String(p.config.AlicloudImageName),
+	}
 	imagesResponse, err := ecsClient.DescribeImages(describeImagesRequest)
 	if err != nil {
 		return nil, false, false, fmt.Errorf("Failed to start import from %s/%s: %s", endpoint, p.config.OSSKey, err)
 	}
 
-	images := imagesResponse.Images.Image
+	images := imagesResponse.Body.Images.Image
 	if len(images) > 0 && !p.config.AlicloudImageForceDelete {
 		return nil, false, false, fmt.Errorf("Duplicated image exists, please delete the existing images " +
 			"or set the 'image_force_delete' value as true")
@@ -230,10 +233,10 @@ func (p *PostProcessor) PostProcess(ctx context.Context, ui packersdk.Ui, artifa
 	if len(images) > 0 && p.config.AlicloudImageForceDelete {
 		deleteImageRequest := ecs.CreateDeleteImageRequest()
 		deleteImageRequest.RegionId = p.config.AlicloudRegion
-		deleteImageRequest.ImageId = images[0].ImageId
+		deleteImageRequest.ImageId = tea.StringValue(images[0].ImageId)
 		_, err := ecsClient.DeleteImage(deleteImageRequest)
 		if err != nil {
-			return nil, false, false, fmt.Errorf("Delete duplicated image %s failed", images[0].ImageName)
+			return nil, false, false, fmt.Errorf("delete duplicated image %s failed", tea.StringValue(images[0].ImageName))
 		}
 	}
 

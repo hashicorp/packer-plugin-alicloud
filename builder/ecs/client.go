@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	ecs20140526Client "github.com/alibabacloud-go/ecs-20140526/v7/client"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/errors"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/responses"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
@@ -14,6 +15,7 @@ import (
 
 type ClientWrapper struct {
 	*ecs.Client
+	v7Client *ecs20140526Client.Client
 }
 
 const (
@@ -227,34 +229,6 @@ func (c *ClientWrapper) WaitForInstanceStatus(regionId string, instanceId string
 			return WaitForExpectToRetry
 		},
 		RetryTimes: mediumRetryTimes,
-	})
-}
-
-func (c *ClientWrapper) WaitForImageStatus(regionId string, imageId string, expectedStatus string, timeout time.Duration) (responses.AcsResponse, error) {
-	return c.WaitForExpected(&WaitForExpectArgs{
-		RequestFunc: func() (responses.AcsResponse, error) {
-			request := ecs.CreateDescribeImagesRequest()
-			request.RegionId = regionId
-			request.ImageId = imageId
-			request.Status = ImageStatusQueried
-			return c.DescribeImages(request)
-		},
-		EvalFunc: func(response responses.AcsResponse, err error) WaitForExpectEvalResult {
-			if err != nil {
-				return WaitForExpectToRetry
-			}
-
-			imagesResponse := response.(*ecs.DescribeImagesResponse)
-			images := imagesResponse.Images.Image
-			for _, image := range images {
-				if image.Status == expectedStatus {
-					return WaitForExpectSuccess
-				}
-			}
-
-			return WaitForExpectToRetry
-		},
-		RetryTimeout: timeout,
 	})
 }
 

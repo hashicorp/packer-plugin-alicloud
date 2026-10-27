@@ -213,6 +213,7 @@ func (b *Builder) Run(ctx context.Context, ui packersdk.Ui, hook packersdk.Hook)
 				AlicloudImageIgnoreDataDisks: b.config.AlicloudImageIgnoreDataDisks,
 				WaitSnapshotReadyTimeout:     b.getSnapshotReadyTimeout(),
 				Tags:                         b.config.AlicloudImageTags,
+				EnableImageInstanceAccess:    b.config.EnableImageInstanceAccess,
 			},
 			&stepCreateTags{
 				Tags: b.config.AlicloudImageTags,

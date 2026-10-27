@@ -80,4 +80,15 @@
 
 - `image_delete_ssh_private_key` (bool) - If set to true, the ECS keypair information will be removed. The default value is false.
 
+- `enable_image_instance_access` (bool) - If set to true, Packer enables instant availability for the image: the
+  build ends as soon as the image becomes "usable" instead of waiting for
+  the fully Available state. This is intended to finish the build faster,
+  but is not guaranteed to always be faster. While usable, the image can
+  already be used to launch instances and be shared with other accounts,
+  even though its creation progress may not yet be 100%. Limitation: the
+  system disk and all data disks of the image must be explicitly
+  configured as ESSD series disks, i.e. disk_category must be one of
+  cloud_essd, cloud_auto, cloud_essd_entry or cloud_regional_disk_auto.
+  The default value is false.
+
 <!-- End of code generated from the comments of the AlicloudImageConfig struct in builder/ecs/image_config.go; -->

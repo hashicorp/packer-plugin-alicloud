@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"log"
 
+	ecs20140526Client "github.com/alibabacloud-go/ecs-20140526/v7/client"
+	"github.com/alibabacloud-go/tea/tea"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
@@ -59,12 +61,13 @@ func (s *stepDeleteAlicloudImageSnapshots) deleteImageAndSnapshots(state multist
 	client := state.Get("client").(*ClientWrapper)
 	ui := state.Get("ui").(packersdk.Ui)
 
-	describeImagesRequest := ecs.CreateDescribeImagesRequest()
-	describeImagesRequest.RegionId = region
-	describeImagesRequest.ImageName = imageName
-	describeImagesRequest.Status = ImageStatusQueried
+	describeImagesRequest := &ecs20140526Client.DescribeImagesRequest{
+		RegionId:  tea.String(region),
+		ImageName: tea.String(imageName),
+		Status:    tea.String(ImageStatusQueried),
+	}
 	imageResponse, _ := client.DescribeImages(describeImagesRequest)
-	images := imageResponse.Images.Image
+	images := imageResponse.Body.Images.Image
 	if len(images) < 1 {
 		return nil
 	}
@@ -72,14 +75,14 @@ func (s *stepDeleteAlicloudImageSnapshots) deleteImageAndSnapshots(state multist
 	ui.Say(fmt.Sprintf("Deleting duplicated image and snapshot in %s: %s", region, imageName))
 
 	for _, image := range images {
-		if image.ImageOwnerAlias != ImageOwnerSelf {
-			log.Printf("You can not delete non-customized images: %s ", image.ImageId)
+		if tea.StringValue(image.ImageOwnerAlias) != ImageOwnerSelf {
+			log.Printf("You can not delete non-customized images: %s ", tea.StringValue(image.ImageId))
 			continue
 		}
 
 		deleteImageRequest := ecs.CreateDeleteImageRequest()
 		deleteImageRequest.RegionId = region
-		deleteImageRequest.ImageId = image.ImageId
+		deleteImageRequest.ImageId = tea.StringValue(image.ImageId)
 		if _, err := client.DeleteImage(deleteImageRequest); err != nil {
 			err := fmt.Errorf("Failed to delete image: %s", err)
 			return err
@@ -88,7 +91,7 @@ func (s *stepDeleteAlicloudImageSnapshots) deleteImageAndSnapshots(state multist
 		if s.AlicloudImageForceDeleteSnapshots {
 			for _, diskDevice := range image.DiskDeviceMappings.DiskDeviceMapping {
 				deleteSnapshotRequest := ecs.CreateDeleteSnapshotRequest()
-				deleteSnapshotRequest.SnapshotId = diskDevice.SnapshotId
+				deleteSnapshotRequest.SnapshotId = tea.StringValue(diskDevice.SnapshotId)
 				if _, err := client.DeleteSnapshot(deleteSnapshotRequest); err != nil {
 					err := fmt.Errorf("Deleting ECS snapshot failed: %s", err)
 					return err

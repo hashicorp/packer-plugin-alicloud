@@ -259,3 +259,63 @@ func TestECSImageConfigPrepare_diskKMSKeyIdRequiresEncrypted(t *testing.T) {
 		t.Fatal("should have error when disk_kms_key_id is set but disk_encrypted is false")
 	}
 }
+
+func TestECSImageConfigPrepare_enableImageInstanceAccess(t *testing.T) {
+	c := testAlicloudImageConfig()
+	c.EnableImageInstanceAccess = true
+	c.ECSSystemDiskMapping.DiskCategory = "cloud_ssd"
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have error when enable_image_instance_access is true but system disk is not ESSD")
+	}
+
+	c.ECSSystemDiskMapping.DiskCategory = "cloud_essd"
+	c.ECSImagesDiskMappings = []AlicloudDiskDevice{
+		{DiskCategory: "cloud_ssd"},
+	}
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have error when enable_image_instance_access is true but a data disk is not ESSD")
+	}
+
+	c.ECSImagesDiskMappings = []AlicloudDiskDevice{
+		{DiskCategory: "cloud_essd"},
+		{DiskCategory: ""},
+	}
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have error when enable_image_instance_access is true but a data disk category is empty")
+	}
+
+	c.ECSImagesDiskMappings = []AlicloudDiskDevice{
+		{DiskCategory: "cloud_essd"},
+		{DiskCategory: "cloud_essd"},
+	}
+	if err := c.Prepare(nil); err != nil {
+		t.Fatalf("shouldn't have err: %s", err)
+	}
+
+	// image_encrypted and image_copy_regions are no longer incompatible
+	// with enable_image_instance_access.
+	c.ImageEncrypted = config.TriTrue
+	c.AlicloudImageDestinationRegions = []string{"cn-beijing"}
+	if err := c.Prepare(nil); err != nil {
+		t.Fatalf("shouldn't have err when enable_image_instance_access is combined with image_encrypted and image_copy_regions: %s", err)
+	}
+
+	for _, category := range []string{"cloud_essd", "cloud_auto", "cloud_essd_entry", "cloud_regional_disk_auto"} {
+		c = testAlicloudImageConfig()
+		c.EnableImageInstanceAccess = true
+		c.ECSSystemDiskMapping.DiskCategory = category
+		c.ECSImagesDiskMappings = []AlicloudDiskDevice{
+			{DiskCategory: category},
+		}
+		if err := c.Prepare(nil); err != nil {
+			t.Fatalf("shouldn't have err when disk category is %q: %s", category, err)
+		}
+	}
+
+	c = testAlicloudImageConfig()
+	c.EnableImageInstanceAccess = true
+	c.ECSSystemDiskMapping.DiskCategory = "cloud_essd_custom"
+	if err := c.Prepare(nil); err == nil {
+		t.Fatal("should have error when disk category merely contains essd but is not an ESSD series category")
+	}
+}

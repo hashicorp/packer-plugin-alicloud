@@ -12,6 +12,8 @@ import (
 
 	"github.com/hashicorp/packer-plugin-sdk/uuid"
 
+	ecs20140526Client "github.com/alibabacloud-go/ecs-20140526/v7/client"
+	"github.com/alibabacloud-go/tea/tea"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/responses"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
@@ -98,6 +100,11 @@ func (s *stepCreateAlicloudInstance) Cleanup(state multistep.StateBag) {
 	if s.instance == nil {
 		return
 	}
+
+	if _, ok := state.GetOk("instance_deleted_early"); ok {
+		return
+	}
+
 	cleanUpMessage(state, "instance")
 
 	client := state.Get("client").(*ClientWrapper)
@@ -134,8 +141,8 @@ func (s *stepCreateAlicloudInstance) buildRunInstancesRequest(state multistep.St
 	if s.AlicloudImageFamily != "" {
 		request.ImageFamily = s.AlicloudImageFamily
 	} else {
-		sourceImage := state.Get("source_image").(*ecs.Image)
-		request.ImageId = sourceImage.ImageId
+		sourceImage := state.Get("source_image").(*ecs20140526Client.DescribeImagesResponseBodyImagesImage)
+		request.ImageId = tea.StringValue(sourceImage.ImageId)
 	}
 	securityGroupId := state.Get("securitygroupid").(string)
 	request.SecurityGroupId = securityGroupId
